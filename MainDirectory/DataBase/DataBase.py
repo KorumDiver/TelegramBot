@@ -1,5 +1,6 @@
 import mysql.connector
 from mysql.connector import Error
+import random
 
 
 class DataBase:
@@ -72,7 +73,9 @@ class DataBase:
         :param id_user: Токен пользователя
         :param name_course: Название курса. Точно также как и в базе.
         """
-        pass
+        cursor = self.__connection.cursor()
+        cursor.callproc("entry_to_course", (id_user, name_course))
+        self.__connection.commit()
 
     def get_home_work(self, name_course: str):
         """
@@ -134,13 +137,16 @@ class DataBase:
     # инфу о том, что в ему отказано в доступе, то скажите мне и я буду возврящать True или False при успешных
     # и не успешных операциях соответственнно.
 
-    def edit_info(self, id_user: int, name_course: str):
+    def edit_info(self, id_user: int, name_course: str, new_info: str):
         """
         Изменение информация по курсу.
         :param id_user: Токен пользователя
         :param name_course: Название курса. Точно также как в базе.
+        :param new_info: Новая инвормация по курсу
         """
-        pass
+        cursor = self.__connection.cursor()
+        cursor.callproc("edit_info_course", (id_user, name_course, new_info))
+        self.__connection.commit()
 
     def add_home_work(self, id_user: int, name_course: str, info: str, dead_line: str, point: int):
         """
@@ -235,6 +241,10 @@ class DataBase:
             self.registration_user(i, str(i), str(i), 2)
             # Создание курсов
             self.create_course("Курс номер %s" % i, info="Info %s" % i, id_teacher=i)
+
+        # Запись каждого студента на 1 курс
+        for student in range(50):
+            self.entry_to_course(student, "Курс номер %s" % random.randint(0, 4))
 
 
 if __name__ == '__main__':
