@@ -12,8 +12,9 @@ class DataBase:
 
     def __init__(self):
         try:
-            self.__connection = mysql.connector.connect(host="127.0.0.1", user="root", password="",
+            self.__connection = mysql.connector.connect(host="127.0.0.1", user="root", password="korum123456",
                                                         database="mydb")
+            print("Completed")
         except Error as e:
             print(e)
 
@@ -58,6 +59,12 @@ class DataBase:
         cursor.callproc("delete_user", (id_user,))
         self.__connection.commit()
 
+    def create_course(self, name_course: str, info="", id_teacher=0):
+        request = 'insert into subjects (name, info, id_teacher) value ("%s","%s",%s)' % (name_course, info, id_teacher)
+        cursor = self.__connection.cursor()
+        cursor.execute(request)
+        self.__connection.commit()
+
     # Student __________________________________________________________________________________________________________
     def entry_to_course(self, id_user: int, name_course: str):
         """
@@ -91,7 +98,11 @@ class DataBase:
                 "surname_student": "Коробов",
                 "info_about_course": [{"rating": 66,
                                        "id_subject": 1,  # Во нутреннем списке может быть много словарей
-                                       "name_subject": "Название курса"}]}
+                                       "name_subject": "Название курса",
+                                       "tasks": [{"id_task": 15,
+                                                  "info": "fkjsdfli",
+                                                  "dead_line": 12122020,  # Должна быть датой, но пока так
+                                                  "completed": True}, ]}]}
 
     def get_literature(self, name_course: str):
         """
@@ -131,13 +142,14 @@ class DataBase:
         """
         pass
 
-    def add_home_work(self, id_user: int, name_course: str, info: str, dead_line: str):
+    def add_home_work(self, id_user: int, name_course: str, info: str, dead_line: str, point: int):
         """
         Добавляет новое домашнее задание по определенному курсу.
         :param id_user: Токен пользователя
         :param name_course: Название курса
         :param info: Информация по о домашнем заданий
         :param dead_line: Дата конца приема домашнего задания
+        :param point: Количество баллов за задание
         """
         pass
 
@@ -190,16 +202,6 @@ class DataBase:
                                    "surname_student": "Фамилия студента",
                                    "rating": "Рейтинг студента по рассматриваемому курсу"}]}
 
-    def add_rating(self, id_user: int, name_course: str, rating: list):
-        """
-        Выставляет студентам рейтинг из параметра rating
-        :param id_user: Токен пользователя
-        :param name_course: Название курса
-        :param rating: Список вида [id_student, rating], можно в виде словаря.
-        Но все таже проблема с определением кому надо запимать этот райтинг
-        """
-        pass
-
     def mark_student(self, id_user: int, name_course: str, id_student: int):
         """
         Отмечает студента на паре по его id.
@@ -223,6 +225,18 @@ class DataBase:
                                    "surname_student": "Фамилия студента",
                                    "count_session": 15}]}
 
+    # ------------------------------------------------------------------------------------------------------------------
+    def random_data(self):
+        # Создание пользоваетлей
+        for i in range(50):
+            self.registration_user(i, str(i), str(i), 0)
+
+        for i in range(5):
+            self.registration_user(i, str(i), str(i), 2)
+            # Создание курсов
+            self.create_course("Курс номер %s" % i, info="Info %s" % i, id_teacher=i)
+
 
 if __name__ == '__main__':
     db = DataBase()
+    db.random_data()
