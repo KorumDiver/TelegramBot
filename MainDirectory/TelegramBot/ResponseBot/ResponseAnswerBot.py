@@ -34,7 +34,7 @@ class ResponseAnswerBot:
         return True
 
     def Hello(self, message):
-        if(self.check(message.chat.id)):
+        if(self.check(self, message.chat.id, message.time)):
             if self.cv_user_id[message.chat.id] != 0:
                 bot.send_message(message.chat.id, "Выберите действие:", self.visual.start_keyboard)
             else:
@@ -50,7 +50,7 @@ class ResponseAnswerBot:
         bot.polling(none_stop=True)
 
 if __name__ == '__main__':
-    ResponseAnswerBot.mainmain(None)
+    ResponseAnswerBot.mainmain(ResponseAnswerBot)
 
 
 
