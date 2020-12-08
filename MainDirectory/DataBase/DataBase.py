@@ -99,6 +99,7 @@ class DataBase:
         return {"id_user": id_user,
                 "name_student": "Александр",
                 "surname_student": "Коробов",
+                "middle_name_student": "Александрович",
                 "info_about_course": [{"rating": 66,
                                        "id_subject": 1,  # Во нутреннем списке может быть много словарей
                                        "name_subject": "Название курса",
@@ -128,6 +129,15 @@ class DataBase:
                 "name_subject": name_course,
                 "info": "Информация по курсу",
                 "teacher": "Преподаватель (имя, фамилия в одну строку)"}
+
+    def get_all_course(self, id_user):
+        """
+        Выводит все курсы доступные на данный момент
+        :param id_user: Токен пользователя
+        :return: Список вида [{id_course, name_course}]
+        """
+        return [{'id_course': 1,
+                 'name_course': "DB"}]
 
     # Teacher___________________________________________________________________________________________________________
     # Преподователь может использовать методы студента, но не наоборот. Следующие методы только для преподователя
