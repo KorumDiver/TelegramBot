@@ -1,7 +1,7 @@
 import telebot
 from telebot import types
 bot = telebot.TeleBot("1438178504:AAF5-LIj7iPbGZWmPT8vOJJeGHjyjH3NTiQ")
-class TelegramBot:
+class TypesAndVisual:
     def __init__(self):
         """
             Инициирует все возможные переменные класса. Создает связь с API Telegram, инициализирует бота в системе.
