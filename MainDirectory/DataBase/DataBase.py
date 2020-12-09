@@ -39,16 +39,17 @@ class DataBase:
 
         return 0
 
-    def registration_user(self, id_user: int, name: str, surname: str, role: int):
+    def registration_user(self, id_user: int, name: str, surname: str, middle_name: str, role: int):
         """
         Регистрация пользователя. Добавляет его в нужную таблицу в зависимоти от его статуса.
         :param id_user: Токен пользователя (id пользователя), для идентификаций в базе данных
         :param name: Имя пользователя
         :param surname: Фамилия пользователя
+        :param middle_name: Отчество
         :param role: Целочисленное значение роли пользователя
         """
         cursor = self.__connection.cursor()
-        cursor.callproc("registration_user", (id_user, name, surname, role == 2))
+        cursor.callproc("registration_user", (id_user, name, surname, middle_name, role == 2))
         self.__connection.commit()
 
     def delete_user(self, id_user):
@@ -67,29 +68,7 @@ class DataBase:
         self.__connection.commit()
 
     # Student __________________________________________________________________________________________________________
-    def entry_to_course(self, id_user: int, name_course: str):
-        """
-        Запись определенного студента на курс
-        :param id_user: Токен пользователя
-        :param name_course: Название курса. Точно также как и в базе.
-        """
-        cursor = self.__connection.cursor()
-        cursor.callproc("entry_to_course", (id_user, name_course))
-        self.__connection.commit()
-
-    def get_home_work(self, name_course: str):
-        """
-        Получение домашнего задания по определенному курсу
-        :param name_course: Название курса. Точно также как и в базе.
-        :return: Словарь вида {id_user, name_course, info_task, dead_line}
-
-
-        Можно выдавать не только одно задание, но и сразу все задания по курсу, но думаю что это будет не удобно.
-        Если решим так, то в выводе будет список таких списков.
-        """
-        return {"id_user": 1, "name_course": name_course, "info_task": "Задание по {name_course}",
-                "dead_line": "01.12.2020"}
-
+    # Получение информаций______________________________________________________________________________________________
     def get_info_student(self, id_user: int):
         """
         Выдает информацию о студенте, включая рейтинг студента по всем дисциплинам на которые он записан
@@ -107,6 +86,19 @@ class DataBase:
                                                   "info": "fkjsdfli",
                                                   "dead_line": 12122020,  # Должна быть датой, но пока так
                                                   "completed": True}, ]}]}
+
+    def get_home_work(self, name_course: str):
+        """
+        Получение домашнего задания по определенному курсу
+        :param name_course: Название курса. Точно также как и в базе.
+        :return: Словарь вида {id_user, name_course, info_task, dead_line}
+
+
+        Можно выдавать не только одно задание, но и сразу все задания по курсу, но думаю что это будет не удобно.
+        Если решим так, то в выводе будет список таких списков.
+        """
+        return {"id_user": 1, "name_course": name_course, "info_task": "Задание по {name_course}",
+                "dead_line": "01.12.2020"}
 
     def get_literature(self, name_course: str):
         """
@@ -139,6 +131,28 @@ class DataBase:
         return [{'id_course': 1,
                  'name_course': "DB"}]
 
+    # Добавление новой информаций_______________________________________________________________________________________
+    def entry_to_course(self, id_user: int, name_course: str):
+        """
+        Запись определенного студента на курс
+        :param id_user: Токен пользователя
+        :param name_course: Название курса. Точно также как и в базе.
+        """
+        cursor = self.__connection.cursor()
+        cursor.callproc("entry_to_course", (id_user, name_course))
+        self.__connection.commit()
+
+    # Изменение информаций______________________________________________________________________________________________
+    def edit_info_student(self, id_user: int, new_name: str, new_surname: str, new_middle_name_student: str):
+        """
+        Изменяет информацию о студенте
+        :param id_user: Токен пользователя
+        :param new_name: Имя
+        :param new_surname: Фамилия
+        :param new_middle_name_student: Отчество
+        """
+        pass
+
     # Teacher___________________________________________________________________________________________________________
     # Преподователь может использовать методы студента, но не наоборот. Следующие методы только для преподователя
     # За исключением метода рейтинга. Для преподователя будет выдаваться список студентов с их рейтингами.
@@ -147,60 +161,7 @@ class DataBase:
     # инфу о том, что в ему отказано в доступе, то скажите мне и я буду возврящать True или False при успешных
     # и не успешных операциях соответственнно.
 
-    def edit_info(self, id_user: int, name_course: str, new_info: str):
-        """
-        Изменение информация по курсу.
-        :param id_user: Токен пользователя
-        :param name_course: Название курса. Точно также как в базе.
-        :param new_info: Новая инвормация по курсу
-        """
-        cursor = self.__connection.cursor()
-        cursor.callproc("edit_info_course", (id_user, name_course, new_info))
-        self.__connection.commit()
-
-    def add_home_work(self, id_user: int, name_course: str, info: str, dead_line: str, point: int):
-        """
-        Добавляет новое домашнее задание по определенному курсу.
-        :param id_user: Токен пользователя
-        :param name_course: Название курса
-        :param info: Информация по о домашнем заданий
-        :param dead_line: Дата конца приема домашнего задания
-        :param point: Количество баллов за задание
-        """
-        pass
-
-    def edit_home_work(self, id_user: int, name_course: str, id_task: int):
-        """
-        Изменяет домашнее задание по id этого домашнего задания.
-        Не конечный вариант, так как пока не мегу предложить хороший способ пойска определенного домашнего
-        задания по курсу.
-        Просто не знаю как будет реализованна система изменения дз. Так что пока так
-        :param id_user: Токен пользователя
-        :param name_course: Название курса
-        :param id_task: Номер задания в таблице (идут не по порядку, так как все задания в одной таблице)
-        """
-        # TODO Решить как будем изменять дз
-        pass
-
-    def add_literature(self, id_user: int, name_course: str, info_literature: str):
-        """
-        Добавляет новую записть в таблицу литературы, для определеного предмета.
-        :param id_user: Токен пользователя
-        :param name_course: Название курса
-        :param info_literature: Строка с инвормацией по литературе: название, автор, ссылка и тд.
-        """
-        pass
-
-    def edit_literature(self, id_user: int, name_course: str, id_literature: int, info_literature: str):
-        """
-        Таже самая проблемма, что и в изменений домашнего задания
-        :param id_user: Токен пользователя
-        :param name_course: Название курса
-        :param id_literature: id ключа в списке литературы
-        :param info_literature: Строка с измененной информацией
-        """
-        pass
-
+    # Получение информация (преподователь)
     def get_students_course(self, id_user: int, name_course: str):
         """
         Выдает список всех студентов по выбранному курсу
@@ -218,43 +179,109 @@ class DataBase:
                                    "surname_student": "Фамилия студента",
                                    "rating": "Рейтинг студента по рассматриваемому курсу"}]}
 
-    def mark_student(self, id_user: int, name_course: str, id_student: int):
+    # Добавление информаций
+    def add_home_work(self, id_user: int, name_course: str, info: str, dead_line: str):
+        """
+        Добавляет новое домашнее задание по определенному курсу.
+        :param id_user: Токен пользователя
+        :param name_course: Название курса
+        :param info: Информация по о домашнем заданий
+        :param dead_line: Дата конца приема домашнего задания
+        :param point: Количество баллов за задание
+        """
+        cursor = self.__connection.cursor()
+        cursor.callproc("add_home_work", (id_user, name_course, info, dead_line))
+        self.__connection.commit()
+
+    def add_literature(self, id_user: int, name_course: str, info_literature: str):
+        """
+        Добавляет новую записть в таблицу литературы, для определеного предмета.
+        :param id_user: Токен пользователя
+        :param name_course: Название курса
+        :param info_literature: Строка с инвормацией по литературе: название, автор, ссылка и тд.
+        """
+        cursor = self.__connection.cursor()
+        cursor.callproc("add_literature", (id_user, name_course, info_literature))
+        self.__connection.commit()
+
+    # Изменение информаций
+    def edit_info_cours(self, id_user: int, name_course: str, new_info: str):
+        """
+        Изменение информация по курсу.
+        :param id_user: Токен пользователя
+        :param name_course: Название курса. Точно также как в базе.
+        :param new_info: Новая инвормация по курсу
+        """
+        cursor = self.__connection.cursor()
+        cursor.callproc("edit_info_course", (id_user, name_course, new_info))
+        self.__connection.commit()
+
+    def edit_home_work(self, id_user: int, name_course: str, num_task: int, new_info: str, new_dead_line: str):
+        """
+        Изменяет конкретное дз в выборке
+        :param id_user: Токен пользователя
+        :param name_course: Название курса
+        :param num_task: Номер задания в выборке по курсу (начинаем с 0) # TODO Отметить функцию выдающую такую выборку
+        :param new_info: Новая информация по ДЗ
+        :param new_dead_line: Новый dead line
+        """
+        cursor = self.__connection.cursor()
+        cursor.callproc("edit_home_work", (id_user, name_course, num_task, new_info, new_dead_line))
+        self.__connection.commit()
+
+    def edit_literature(self, id_user: int, name_course: str, num_literature: int, new_info_literature: str):
+        """
+        Таже самая проблемма, что и в изменений домашнего задания
+        :param id_user: Токен пользователя
+        :param name_course: Название курса
+        :param num_literature: Номер задания в выборке по курсу (начинаем с 0) # TODO Отметить функцию выдающую такую выборку
+        :param new_info_literature: Строка с измененной информацией
+        """
+        cursor = self.__connection.cursor()
+        cursor.callproc("edit_literature", (id_user, name_course, num_literature, new_info_literature))
+        self.__connection.commit()
+
+    # Добавление информаций (Не использовать, пока не пропишу нормальные параметры
+    def mark_student_in_class(self, id_user: int, name_course: str, num_student: int):
         """
         Отмечает студента на паре по его id.
         :param id_user: Токен пользователя
         :param name_course: Название курса
-        :param id_student: Токен студента
+        :param num_student: Номер студента в выборке по курсу (начинаем с 0) # TODO Отметить функцию выдающую такую выборку
         """
         pass
 
-    def attend_class(self, id_user: int, name_course: str):
+    def mark_completed_task(self, num_student: int, num_task: int):
         """
-        Выдает список студентов с количеством посещеных занятий по данному курсу.
-        :param id_user: Токен пользователя (преподователя)
-        :param name_course: Название курса
-        :return: Словарь {id_user, name_course, [{id_student, name_student, surname_student, count_session}]}
+        Отмечает, что студент выполнил задание
+        :param num_student: Номер студента в выборке по курсу (начинаем с 0) # TODO Отметить функцию выдающую такую выборку
+        :param num_task: Номер задания в выборке по курсу (начинаем с 0) # TODO Отметить функцию выдающую такую выборку
         """
-        return {"id_user": id_user,
-                "name_course": name_course,
-                "list_sessions": [{"id_student": "Токен студента",
-                                   "name_student": "Имя студента",
-                                   "surname_student": "Фамилия студента",
-                                   "count_session": 15}]}
+        pass
 
     # ------------------------------------------------------------------------------------------------------------------
     def random_data(self):
         # Создание пользоваетлей
         for i in range(50):
-            self.registration_user(i, str(i), str(i), 0)
+            self.registration_user(i, str(i), str(i), str(i), 0)
 
         for i in range(5):
-            self.registration_user(i, str(i), str(i), 2)
+            self.registration_user(i, str(i), str(i), str(i), 2)
             # Создание курсов
             self.create_course("Курс номер %s" % i, info="Info %s" % i, id_teacher=i)
 
+        self.edit_info_cours(0, "Курс номер 0", "Новая информация по курсу")
         # Запись каждого студента на 1 курс
         for student in range(50):
             self.entry_to_course(student, "Курс номер %s" % random.randint(0, 4))
+
+        for i in range(50):
+            a = random.randint(0, 4)
+            self.add_literature(a, "Курс номер %s" % a, "Литература к курсу %s" % a)
+            self.add_home_work(a, "Курс номер %s" % a, "Домашнее к курсу %s" % a, "2020-12-12")
+
+        self.edit_home_work(0, "Курс номер 0", 0, "Номая информация по дз", "2020-12-12")
+        self.edit_literature(0, "Курс номер 0", 0, "Новая литература")
 
 
 if __name__ == '__main__':
