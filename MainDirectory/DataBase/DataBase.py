@@ -75,6 +75,7 @@ class DataBase:
         :param id_user: Токен пользователя
         :return: Словарь вида {id_student | name_student | surname_student | [{rating | id_subject | name_subject}]}
         """
+
         return {"id_user": id_user,
                 "name_student": "Александр",
                 "surname_student": "Коробов",
@@ -82,10 +83,14 @@ class DataBase:
                 "info_about_course": [{"rating": 66,
                                        "id_subject": 1,  # Во нутреннем списке может быть много словарей
                                        "name_subject": "Название курса",
-                                       "tasks": [{"id_task": 15,
-                                                  "info": "fkjsdfli",
-                                                  "dead_line": 12122020,  # Должна быть датой, но пока так
-                                                  "completed": True}, ]}]}
+                                       "name_teacher": "111",
+                                       "completed_tasks": [{"id_task": 15,
+                                                            "info": "fkjsdfli",
+                                                            "dead_line": 12122020,  # Должна быть датой, но пока так
+                                                            "point": 5}
+                                                           ]
+                                       }]
+                }
 
     def get_home_work(self, name_course: str):
         """
@@ -277,8 +282,8 @@ class DataBase:
 
         for i in range(50):
             a = random.randint(0, 4)
-            self.add_literature(a, "Курс номер %s" % a, "Литература к курсу %s" % a)
-            self.add_home_work(a, "Курс номер %s" % a, "Домашнее к курсу %s" % a, "2020-12-12")
+            self.add_literature(a, "Курс номер %s" % a, "Литература к курсу %s_%s" % (a, i))
+            self.add_home_work(a, "Курс номер %s" % a, "Домашнее к курсу %s_%s" % (a, i), "2020-12-12")
 
         self.edit_home_work(0, "Курс номер 0", 0, "Номая информация по дз", "2020-12-12")
         self.edit_literature(0, "Курс номер 0", 0, "Новая литература")
