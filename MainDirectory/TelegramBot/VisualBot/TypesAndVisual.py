@@ -7,6 +7,7 @@ class TypesAndVisual:
             Инициирует все возможные переменные класса. Создает связь с API Telegram, инициализирует бота в системе.
             Импортирует библиотеки. Инициализирует класс ResponseAnswerBot
         """
+        pass
 
     # начальная клавиатура
     def start_keyboard(self):
