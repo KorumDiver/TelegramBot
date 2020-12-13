@@ -75,7 +75,23 @@ class DataBase:
         :param id_user: Токен пользователя
         :return: Словарь вида {id_student | name_student | surname_student | [{rating | id_subject | name_subject}]}
         """
-
+        request = """
+        select s.id_student, s.name, s.surname, s.middle_name, i.* from students as s
+            left join student_subject as s_s
+                on s.id_student = s_s.id_student
+            left join info_course_and_task as i
+                on i.id_subject=s_s.id_subject
+        where s.id_student = %s;
+        """ % id_user
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        response = cursor.fetchall()
+        ret = {"id_user": response[0]["id_student"],
+               "name_student": response[0]["name"],
+               "surname_student": response[0]["surname"],
+               "middle_name_student": response[0][""]}
+        for i in response:
+            pass
         return {"id_user": id_user,
                 "name_student": "Александр",
                 "surname_student": "Коробов",
@@ -135,6 +151,15 @@ class DataBase:
         """
         return [{'id_course': 1,
                  'name_course': "DB"}]
+
+    def get_not_attend(self, id_user: int):
+        """
+        Выдает список курсов на которые человек не записан
+        :param id_user: Токен пользователя
+        :return: Список
+        """
+        return [{"id_course": 1, "name_course": "Название"},
+                {"id_course": 2, "name_course": "Название"}]
 
     # Добавление новой информаций_______________________________________________________________________________________
     def entry_to_course(self, id_user: int, name_course: str):
@@ -279,6 +304,7 @@ class DataBase:
         # Запись каждого студента на 1 курс
         for student in range(50):
             self.entry_to_course(student, "Курс номер %s" % random.randint(0, 4))
+            self.entry_to_course(student, "Курс номер %s" % random.randint(0, 4))
 
         for i in range(50):
             a = random.randint(0, 4)
@@ -291,4 +317,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    db.random_data()
+    db.get_info_student(2)
