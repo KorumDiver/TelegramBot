@@ -1,4 +1,4 @@
-import telebot
+import
 from telebot import apihelper
 # import MainDirectory.DataBase.DataBase as database
 import MainDirectory.TelegramBot.VisualBot.TypesAndVisual as visual_class
@@ -8,7 +8,6 @@ bot = telebot.TeleBot("1438178504:AAF5-LIj7iPbGZWmPT8vOJJeGHjyjH3NTiQ")
 # db = DataBase()
 
 # id| роль | last_time_message| tec_curs|
-cv_user_id = {}
 
 visual = visual_class.TypesAndVisual()
 cv_user_id = {-1: [0, 0, {"course": ""}]}
