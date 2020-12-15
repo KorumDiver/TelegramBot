@@ -13,7 +13,7 @@ class DataBase:
 
     def __init__(self):
         try:
-            self.__connection = mysql.connector.connect(host="127.0.0.1", user="root", password="korum123456",
+            self.__connection = mysql.connector.connect(host="127.0.0.1", user="root", password="",
                                                         database="mydb")
             print("Completed")
         except Error as e:
