@@ -75,23 +75,44 @@ class DataBase:
         :param id_user: Токен пользователя
         :return: Словарь вида {id_student | name_student | surname_student | [{rating | id_subject | name_subject}]}
         """
-        request = """
-        select s.id_student, s.name, s.surname, s.middle_name, i.* from students as s
-            left join student_subject as s_s
-                on s.id_student = s_s.id_student
-            left join info_course_and_task as i
-                on i.id_subject=s_s.id_subject
-        where s.id_student = %s;
-        """ % id_user
+        request_info_student = "select id_student, name, surname, middle_name from students where id_student = %s" % id_user
         cursor = self.__connection.cursor(dictionary=True)
-        cursor.execute(request)
-        response = cursor.fetchall()
-        ret = {"id_user": response[0]["id_student"],
-               "name_student": response[0]["name"],
-               "surname_student": response[0]["surname"],
-               "middle_name_student": response[0][""]}
-        for i in response:
-            pass
+        cursor.execute(request_info_student)
+        ris = cursor.fetchall()[0]  # response info student
+        ret = {"id_user": ris["id_student"],
+               "name_student": ris["name"],
+               "surname_student": ris["surname"],
+               "middle_name_student": ris["middle_name"],
+               "info_about_course": []}
+
+        request_courses = """select s.id_subject as id_subject,
+                                   s.name as name_subject,
+                                   s.info as info_subject,
+                                   t.name as name_teacher,
+                                   t.surname as surname_teacher,
+                                   t.middle_name as middle_name_teacher
+                            from student_subject as s_s 
+                                left join subjects as s
+                                on s_s.id_subject = s.id_subject 
+                                left join teachers as t
+                                on s.id_teacher = t.id_teacher
+                            where s_s.id_student = %s""" % id_user
+        cursor.execute(request_courses)
+        courses = cursor.fetchall()
+        for i in courses:
+            course = {"id_subject": i["id_subject"],
+                      "name_subject": i["name_subject"],
+                      "name_teacher": i['name_teacher'],
+                      "completed_task": []}
+            request_tasks = "select "  # todo дописать запрос на вытаскивание заданий с баллами
+            cursor.execute(request_tasks)
+            tasks = cursor.fetchall()
+            for task in tasks:
+                course['completed_task'].append({"id_task": task["id_task"],
+                                                 "info": task["info"],
+                                                 "dead_line": task["dead_line"],
+                                                 "point": task["point"]})
+            ret["info_about_course"].append(course)
         return {"id_user": id_user,
                 "name_student": "Александр",
                 "surname_student": "Коробов",
@@ -192,22 +213,78 @@ class DataBase:
     # и не успешных операциях соответственнно.
 
     # Получение информация (преподователь)
-    def get_students_course(self, id_user: int, name_course: str):
+    def get_students_from_course(self, id_user: int, name_course: str):
         """
-        Выдает список всех студентов по выбранному курсу
+        Выдает список студентов посещающих определенный курс
         :param id_user: Токен пользователя
         :param name_course: Название курса
-        :return: Словарь вида {id_user, name_course, [{id_student, name_student, surname_student, rating}]}
-
-
-        Так же рейтинг курса выбирается по этому запросу
+        :return: Словарь вида {id_subject, name_subject,
+            [{id_student, name_student, surname_student, middle_student, rating}]
         """
-        return {"id_user": id_user,
-                "name_course": name_course,
-                "info_students": [{"id_student": "Токен студента",
-                                   "name_student": "Имя студента",
-                                   "surname_student": "Фамилия студента",
-                                   "rating": "Рейтинг студента по рассматриваемому курсу"}]}
+        cursor = self.__connection.cursor(dictionary=True)
+        request = "select * from view_student_subject where id_teacher = %s and name_subject = '%s'" \
+                  % (id_user, name_course)
+        cursor.execute(request)
+        response = cursor.fetchall()
+        if len(response) != 0:
+            ret = {"id_subject": response[0]["id_subject"],
+                   "name_subject": response[0]["name_subject"],
+                   "students": []}
+            for i in response:
+                ret["students"].append({"id_student": i["id_student"],
+                                        "name_student": i["name_student"],
+                                        "surname_student": i["surname_student"],
+                                        "middle_name_student": i["middle_name_student"],
+                                        "rating": i["rating"]})
+            return ret
+        else:
+            print("Данный преподователь не имеет доступа к данным записям!!!")
+
+    def get_lessons_from_course(self, id_user: int, name_course: str):
+        """
+        Выдает список всех занятий по определенному курсу
+        :param id_user: Токен пользователя
+        :param name_course: Название курса
+        :return: Словарь вида {id_subject, name_subject, [{id_lesson, date_lesson}]
+        """
+        cursor = self.__connection.cursor(dictionary=True)
+        request = "select * from view_subject_lesson where id_teacher=%s and name_subject = '%s'" \
+                  % (id_user, name_course)
+        cursor.execute(request)
+        response = cursor.fetchall()
+        if len(response) != 0:
+            ret = {"id_subject": response[0]["id_subject"],
+                   "name_subject": response[0]["name_subject"],
+                   "lessons": []}
+            for i in response:
+                ret["lessons"].append({"id_lesson": i["id_lesson"],
+                                       "date_lesson": i["date_lesson"]})
+            return ret
+        else:
+            print("Данный преподователь не имеет доступа к данным записям!!!")
+
+    def get_tasks_from_course(self, id_user: int, name_course: str):
+        """
+        Выдает список всех задач по курсу
+        :param id_user: Токен пользователя
+        :param name_course: Название курса
+        :return: Словарь вида {id_subject, name_subject, [{id_task, task, dead_line}]}
+        """
+        cursor = self.__connection.cursor(dictionary=True)
+        request = "select * from view_task_subject where id_teacher=%s and name_subject='%s'" % (id_user, name_course)
+        cursor.execute(request)
+        response = cursor.fetchall()
+        if len(response) != 0:
+            ret = {"id_subject": response[0]["id_subject"],
+                   "name_subject": response[0]["name_subject"],
+                   "tasks": []}
+            for i in response:
+                ret["tasks"].append({"id_task": i["id_task"],
+                                     "info": i["info"],
+                                     "dead_line": i["dead_line"]})
+            return ret
+        else:
+            print("Данный преподователь не имеет доступа к данным записям!!!")
 
     # Добавление информаций
     def add_home_work(self, id_user: int, name_course: str, info: str, dead_line: str):
@@ -234,8 +311,31 @@ class DataBase:
         cursor.callproc("add_literature", (id_user, name_course, info_literature))
         self.__connection.commit()
 
+    def create_lesson(self, id_user: int, name_course: str, date: str):
+        """
+        Создает новый урок по заданной дате
+        :param id_user: Токен пользоваетля
+        :param name_course: Название курса
+        :param date: Дата проведения урока
+        """
+        cursor = self.__connection.cursor()
+        cursor.callproc("create_lesson", (id_user, name_course, date))
+        self.__connection.commit()
+
+    def create_task(self, id_user: int, name_course: str, info: str, dead_line: str):
+        """
+        Добавляет задание с указанным описанием и dead line
+        :param id_user: Токен пользователя
+        :param name_course: Назваие курса
+        :param info: Инвормация по заданию
+        :param dead_line: Срок сдачи задания
+        """
+        cursor = self.__connection.cursor()
+        cursor.callproc("create_task", (id_user, name_course, info, dead_line))
+        self.__connection.commit()
+
     # Изменение информаций
-    def edit_info_cours(self, id_user: int, name_course: str, new_info: str):
+    def edit_info_course(self, id_user: int, name_course: str, new_info: str):
         """
         Изменение информация по курсу.
         :param id_user: Токен пользователя
@@ -271,23 +371,31 @@ class DataBase:
         cursor.callproc("edit_literature", (id_user, name_course, num_literature, new_info_literature))
         self.__connection.commit()
 
-    # Добавление информаций (Не использовать, пока не пропишу нормальные параметры
-    def mark_student_in_class(self, id_user: int, name_course: str, num_student: int):
+    # Фонкций отметки
+    def mark_student_in_class(self, id_user: int, name_course: str, id_lesson: int, id_student: int):
         """
         Отмечает студента на паре по его id.
         :param id_user: Токен пользователя
         :param name_course: Название курса
-        :param num_student: Номер студента в выборке по курсу (начинаем с 0) # TODO Отметить функцию выдающую такую выборку
+        :param id_lesson: Id предмета
+        :param id_student: Id студента
         """
-        pass
+        cursor = self.__connection.cursor()
+        cursor.callproc("mark_student_in_class", (id_user, name_course, id_lesson, id_student))
+        self.__connection.commit()
 
-    def mark_completed_task(self, num_student: int, num_task: int):
+    def mark_completed_task(self, id_user: int, name_course: str, id_task: int, id_student: int, point: int):
         """
-        Отмечает, что студент выполнил задание
-        :param num_student: Номер студента в выборке по курсу (начинаем с 0) # TODO Отметить функцию выдающую такую выборку
-        :param num_task: Номер задания в выборке по курсу (начинаем с 0) # TODO Отметить функцию выдающую такую выборку
+        Отмечает, что студент выполнил определенное задание
+        :param id_user: Токен пользователя
+        :param name_course: Название курса
+        :param id_task: Id задания
+        :param id_student: Id студентв
+        :param point: Количество баллов за задание
         """
-        pass
+        cursor = self.__connection.cursor()
+        cursor.callproc("mark_completed_task", (id_user, name_course, id_task, id_student, point))
+        self.__connection.commit()
 
     # ------------------------------------------------------------------------------------------------------------------
     def random_data(self):
@@ -300,7 +408,7 @@ class DataBase:
             # Создание курсов
             self.create_course("Курс номер %s" % i, info="Info %s" % i, id_teacher=i)
 
-        self.edit_info_cours(0, "Курс номер 0", "Новая информация по курсу")
+        self.edit_info_course(0, "Курс номер 0", "Новая информация по курсу")
         # Запись каждого студента на 1 курс
         for student in range(50):
             self.entry_to_course(student, "Курс номер %s" % random.randint(0, 4))
@@ -317,4 +425,5 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    db.get_info_student(2)
+
+    db.mark_completed_task(0,"Курс номер 0", 4, 0, 15)
