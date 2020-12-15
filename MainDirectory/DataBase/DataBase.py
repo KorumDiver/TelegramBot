@@ -120,13 +120,17 @@ class DataBase:
         Получение домашнего задания по определенному курсу
         :param name_course: Название курса. Точно также как и в базе.
         :return: Словарь вида {id_user, name_course, info_task, dead_line}
-
-
-        Можно выдавать не только одно задание, но и сразу все задания по курсу, но думаю что это будет не удобно.
-        Если решим так, то в выводе будет список таких списков.
         """
-        return {"id_user": 1, "name_course": name_course, "info_task": "Задание по {name_course}",
-                "dead_line": "01.12.2020"}
+        request = "select id_task, info, dead_line from view_task_subject where name_subject = '%s'" % name_course
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        ret = {"name_course": name_course,
+               "tasks": []}
+        for row in cursor.fetchall():
+            ret['tasks'].append({"id_task": row["id_task"],
+                                 "info_task": row["info"],
+                                 "dead_line": row["dead_line"]})
+        return ret
 
     def get_literature(self, name_course: str):
         """
@@ -134,10 +138,16 @@ class DataBase:
         :param name_course: Название курса. Точно также как в базе.
         :return: Словарь вида {id_subject | name_subject | id_literature | name_literature}
         """
-        return {"id_subject": 1,
-                "name_subject": name_course,
-                "literature": [{"id_literature": 15,
-                                "info_literature": "Информация о книге"}]}
+        request = "select id_literature, name from literatures where id_subject = (select id_subject from subjects " \
+                  "where name ='%s');" % name_course
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        ret = {"name_subject": name_course,
+               "literatures": []}
+        for row in cursor.fetchall():
+            ret["literatures"].append({"id_literature": row["id_literature"],
+                                       "name": row["name"]})
+        return ret
 
     def get_info_to_course(self, name_course: str):
         """
@@ -145,19 +155,28 @@ class DataBase:
         :param name_course: Название курса. Точно также как в базе.
         :return: Словарь вида {id_subject | name_subject | info | teacher}
         """
-        return {"id_subject": 1,
-                "name_subject": name_course,
-                "info": "Информация по курсу",
-                "teacher": "Преподаватель (имя, фамилия в одну строку)"}
+        request = "select info, name_teacher, surname_teacher, middle_name_teacher from view_info_subject where " \
+                  "name_subject = '%s'" % name_course
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        response = cursor.fetchall()[0]
+        ret = {"name_subject": name_course,
+               "info": response["info"],
+               "teacher": response["surname_teacher"] + " " + response["name_teacher"] + " " + response[
+                   "middle_name_teacher"]}
 
-    def get_all_course(self, id_user):
+        return ret
+
+    def get_all_course(self):
         """
         Выводит все курсы доступные на данный момент
         :param id_user: Токен пользователя
         :return: Список вида [{id_course, name_course}]
         """
-        return [{'id_course': 1,
-                 'name_course': "DB"}]
+        request = "select id_subject, name from subjects order by id_subject"
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        return cursor.fetchall()
 
     def get_not_attend(self, id_user: int):
         """
@@ -165,8 +184,11 @@ class DataBase:
         :param id_user: Токен пользователя
         :return: Список
         """
-        return [{"id_course": 1, "name_course": "Название"},
-                {"id_course": 2, "name_course": "Название"}]
+        request = """select id_subject, name as name_subject from subjects where id_subject not in (select id_subject 
+                     from view_student_subject where id_student=%s) order by id_subject;""" % id_user
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        return cursor.fetchall()
 
     # Добавление новой информаций_______________________________________________________________________________________
     def entry_to_course(self, id_user: int, name_course: str):
@@ -188,7 +210,11 @@ class DataBase:
         :param new_surname: Фамилия
         :param new_middle_name_student: Отчество
         """
-        pass
+        request = "update students set name='%s', surname='%s', middle_name='%s' where id_student=%s" % (
+            new_name, new_surname, new_middle_name_student, id_user)
+        cursor = self.__connection.cursor()
+        cursor.execute(request)
+        self.__connection.commit()
 
     # Teacher___________________________________________________________________________________________________________
     # Преподователь может использовать методы студента, но не наоборот. Следующие методы только для преподователя
@@ -232,7 +258,6 @@ class DataBase:
             return ret
         else:
             print("Данный преподователь не имеет доступа к данным записям!!!")
-            return {}
 
     def get_lessons_from_course(self, id_user: int, name_course: str):
         """
@@ -381,12 +406,12 @@ class DataBase:
     # ------------------------------------------------------------------------------------------------------------------
     def random_data(self):
         # Создание студентов
-        students = [i for i in range(10 ** 5, 10 ** 5 + 500)]
+        students = [i for i in range(10 ** 5, 10 ** 5 + 100)]
         for student in students:
             self.registration_user(student, "Имя %s" % student, "Фамилия %s" % student, "Отчество %s" % student, 0)
 
         # Создание преподователей
-        teachers = [i for i in range(2 * 10 ** 5, 2 * 10 ** 5 + 50)]
+        teachers = [i for i in range(2 * 10 ** 5, 2 * 10 ** 5 + 10)]
         for teacher in teachers:
             self.registration_user(teacher, "Имя %s" % teacher, "Фамилия %s" % teacher, "Отчество %s" % teacher, 2)
 
@@ -404,12 +429,12 @@ class DataBase:
         for course in courses:
             for i in range(10):
                 self.add_home_work(teachers[course - 1], "Курс: %s" % course, "Info: home_work_%s_%s" % (course, i),
-                                   "2020-01-%s" % (i+1))
+                                   "2020-01-%s" % (i + 1))
 
         # Добавление 10 занятий для каждого курса
         for course in courses:
             for i in range(10):
-                self.add_lesson(teachers[course - 1], "Курс: %s" % course, "2020-01-%s" % i)
+                self.add_lesson(teachers[course - 1], "Курс: %s" % course, "2020-01-%s" % (i+1))
 
         # Запись студента на 3 курса
         for student in students:
@@ -437,4 +462,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    print(*db.get_info_student(100000)["info_about_courses"], sep="\n")
+    db.random_data()
