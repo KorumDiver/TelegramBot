@@ -75,59 +75,45 @@ class DataBase:
         :param id_user: Токен пользователя
         :return: Словарь вида {id_student | name_student | surname_student | [{rating | id_subject | name_subject}]}
         """
-        request_info_student = "select id_student, name, surname, middle_name from students where id_student = %s" % id_user
+        request = "select * from view_student_subject where id_student=%s" % id_user
         cursor = self.__connection.cursor(dictionary=True)
-        cursor.execute(request_info_student)
-        ris = cursor.fetchall()[0]  # response info student
-        ret = {"id_user": ris["id_student"],
-               "name_student": ris["name"],
-               "surname_student": ris["surname"],
-               "middle_name_student": ris["middle_name"],
-               "info_about_course": []}
+        cursor.execute(request)
+        response = cursor.fetchall()
+        ret = {"id_user": id_user,
+               "name_student": response[0]["name_student"],
+               "surname_student": response[0]["surname_student"],
+               "middle_name_student": response[0]["middle_name_student"],
+               "info_about_courses": []}
+        for row in response:
+            completed_tasks = []
+            classes_attend = []
 
-        request_courses = """select s.id_subject as id_subject,
-                                   s.name as name_subject,
-                                   s.info as info_subject,
-                                   t.name as name_teacher,
-                                   t.surname as surname_teacher,
-                                   t.middle_name as middle_name_teacher
-                            from student_subject as s_s 
-                                left join subjects as s
-                                on s_s.id_subject = s.id_subject 
-                                left join teachers as t
-                                on s.id_teacher = t.id_teacher
-                            where s_s.id_student = %s""" % id_user
-        cursor.execute(request_courses)
-        courses = cursor.fetchall()
-        for i in courses:
-            course = {"id_subject": i["id_subject"],
-                      "name_subject": i["name_subject"],
-                      "name_teacher": i['name_teacher'],
-                      "completed_task": []}
-            request_tasks = "select "  # todo дописать запрос на вытаскивание заданий с баллами
-            cursor.execute(request_tasks)
-            tasks = cursor.fetchall()
-            for task in tasks:
-                course['completed_task'].append({"id_task": task["id_task"],
-                                                 "info": task["info"],
-                                                 "dead_line": task["dead_line"],
-                                                 "point": task["point"]})
-            ret["info_about_course"].append(course)
-        return {"id_user": id_user,
-                "name_student": "Александр",
-                "surname_student": "Коробов",
-                "middle_name_student": "Александрович",
-                "info_about_course": [{"rating": 66,
-                                       "id_subject": 1,  # Во нутреннем списке может быть много словарей
-                                       "name_subject": "Название курса",
-                                       "name_teacher": "111",
-                                       "completed_tasks": [{"id_task": 15,
-                                                            "info": "fkjsdfli",
-                                                            "dead_line": 12122020,  # Должна быть датой, но пока так
-                                                            "point": 5}
-                                                           ]
-                                       }]
-                }
+            request = "select * from view_task_student where id_student = %s and id_subject = %s" % (ret["id_user"],
+                                                                                                     row["id_subject"])
+            cursor.execute(request)
+            for i in cursor.fetchall():
+                completed_tasks.append({"id_task": i["id_task"],
+                                        "info": i["info"],
+                                        "dead_line": i["dead_line"],  # Должна быть датой, но пока так
+                                        "point": i["point"]})
+
+            request = "select * from view_lesson_student where id_student = %s and id_subject = %s" % (ret["id_user"],
+                                                                                                       row["id_subject"]
+                                                                                                       )
+            cursor.execute(request)
+            for i in cursor.fetchall():
+                classes_attend.append({"id_lesson": i["id_lesson"],
+                                       "date_lesson": i["date"]})
+
+            ret["info_about_courses"].append({"id_subject": row["id_subject"],
+                                              "name_subject": row["name_subject"],
+                                              "name_teacher": row["surname_teacher"] + " " + row["name_teacher"] + " " +
+                                                              row["middle_name_teacher"],
+                                              "rating": row["rating"],
+                                              "completed_tasks": completed_tasks,
+                                              "classes_attend": classes_attend})
+
+        return ret
 
     def get_home_work(self, name_course: str):
         """
@@ -222,8 +208,15 @@ class DataBase:
             [{id_student, name_student, surname_student, middle_student, rating}]
         """
         cursor = self.__connection.cursor(dictionary=True)
-        request = "select * from view_student_subject where id_teacher = %s and name_subject = '%s';" \
-                  % (id_user, name_course)
+        request = """select id_subject,
+                            name_subject,
+                            id_student,
+                            name_student,
+                            surname_student,
+                            middle_name_student,
+                            rating
+                        from view_student_subject
+                        where id_teacher = %s and name_subject = '%s';""" % (id_user, name_course)
         cursor.execute(request)
         response = cursor.fetchall()
         if len(response) != 0:
@@ -239,6 +232,7 @@ class DataBase:
             return ret
         else:
             print("Данный преподователь не имеет доступа к данным записям!!!")
+            return {}
 
     def get_lessons_from_course(self, id_user: int, name_course: str):
         """
@@ -410,7 +404,7 @@ class DataBase:
         for course in courses:
             for i in range(10):
                 self.add_home_work(teachers[course - 1], "Курс: %s" % course, "Info: home_work_%s_%s" % (course, i),
-                                   "2020-01-%s" % i)
+                                   "2020-01-%s" % (i+1))
 
         # Добавление 10 занятий для каждого курса
         for course in courses:
@@ -443,3 +437,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
+    print(*db.get_info_student(100000)["info_about_courses"], sep="\n")
