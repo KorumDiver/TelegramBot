@@ -212,7 +212,7 @@ class DataBase:
     # инфу о том, что в ему отказано в доступе, то скажите мне и я буду возврящать True или False при успешных
     # и не успешных операциях соответственнно.
 
-    # Получение информация (преподователь)
+    # Получение информаций (преподователь)
     def get_students_from_course(self, id_user: int, name_course: str):
         """
         Выдает список студентов посещающих определенный курс
@@ -222,7 +222,7 @@ class DataBase:
             [{id_student, name_student, surname_student, middle_student, rating}]
         """
         cursor = self.__connection.cursor(dictionary=True)
-        request = "select * from view_student_subject where id_teacher = %s and name_subject = '%s'" \
+        request = "select * from view_student_subject where id_teacher = %s and name_subject = '%s';" \
                   % (id_user, name_course)
         cursor.execute(request)
         response = cursor.fetchall()
@@ -292,9 +292,8 @@ class DataBase:
         Добавляет новое домашнее задание по определенному курсу.
         :param id_user: Токен пользователя
         :param name_course: Название курса
-        :param info: Информация по о домашнем заданий
+        :param info: Информация о домашнем заданий
         :param dead_line: Дата конца приема домашнего задания
-        :param point: Количество баллов за задание
         """
         cursor = self.__connection.cursor()
         cursor.callproc("add_home_work", (id_user, name_course, info, dead_line))
@@ -311,7 +310,7 @@ class DataBase:
         cursor.callproc("add_literature", (id_user, name_course, info_literature))
         self.__connection.commit()
 
-    def create_lesson(self, id_user: int, name_course: str, date: str):
+    def add_lesson(self, id_user: int, name_course: str, date: str):
         """
         Создает новый урок по заданной дате
         :param id_user: Токен пользоваетля
@@ -319,19 +318,7 @@ class DataBase:
         :param date: Дата проведения урока
         """
         cursor = self.__connection.cursor()
-        cursor.callproc("create_lesson", (id_user, name_course, date))
-        self.__connection.commit()
-
-    def create_task(self, id_user: int, name_course: str, info: str, dead_line: str):
-        """
-        Добавляет задание с указанным описанием и dead line
-        :param id_user: Токен пользователя
-        :param name_course: Назваие курса
-        :param info: Инвормация по заданию
-        :param dead_line: Срок сдачи задания
-        """
-        cursor = self.__connection.cursor()
-        cursor.callproc("create_task", (id_user, name_course, info, dead_line))
+        cursor.callproc("add_lesson", (id_user, name_course, date))
         self.__connection.commit()
 
     # Изменение информаций
@@ -371,7 +358,7 @@ class DataBase:
         cursor.callproc("edit_literature", (id_user, name_course, num_literature, new_info_literature))
         self.__connection.commit()
 
-    # Фонкций отметки
+    # Функций отметки
     def mark_student_in_class(self, id_user: int, name_course: str, id_lesson: int, id_student: int):
         """
         Отмечает студента на паре по его id.
@@ -399,31 +386,60 @@ class DataBase:
 
     # ------------------------------------------------------------------------------------------------------------------
     def random_data(self):
-        # Создание пользоваетлей
-        for i in range(50):
-            self.registration_user(i, str(i), str(i), str(i), 0)
+        # Создание студентов
+        students = [i for i in range(10 ** 5, 10 ** 5 + 500)]
+        for student in students:
+            self.registration_user(student, "Имя %s" % student, "Фамилия %s" % student, "Отчество %s" % student, 0)
 
-        for i in range(5):
-            self.registration_user(i, str(i), str(i), str(i), 2)
-            # Создание курсов
-            self.create_course("Курс номер %s" % i, info="Info %s" % i, id_teacher=i)
+        # Создание преподователей
+        teachers = [i for i in range(2 * 10 ** 5, 2 * 10 ** 5 + 50)]
+        for teacher in teachers:
+            self.registration_user(teacher, "Имя %s" % teacher, "Фамилия %s" % teacher, "Отчество %s" % teacher, 2)
 
-        self.edit_info_course(0, "Курс номер 0", "Новая информация по курсу")
-        # Запись каждого студента на 1 курс
-        for student in range(50):
-            self.entry_to_course(student, "Курс номер %s" % random.randint(0, 4))
-            self.entry_to_course(student, "Курс номер %s" % random.randint(0, 4))
+        # Создание курсов и связка их с преподователем
+        courses = [i for i in range(1, len(teachers) + 1)]  # Номера курсов в БД
+        for course in courses:
+            self.create_course("Курс: %s" % course, "Teacher: %s" % teachers[course - 1], teachers[course - 1])
 
-        for i in range(50):
-            a = random.randint(0, 4)
-            self.add_literature(a, "Курс номер %s" % a, "Литература к курсу %s_%s" % (a, i))
-            self.add_home_work(a, "Курс номер %s" % a, "Домашнее к курсу %s_%s" % (a, i), "2020-12-12")
+        # Добавление литературы к каждому курсу
+        for course in courses:
+            for i in range(1, 5):
+                self.add_literature(teachers[course - 1], "Курс: %s" % course, "Literature: course_%s_%s" % (course, i))
 
-        self.edit_home_work(0, "Курс номер 0", 0, "Номая информация по дз", "2020-12-12")
-        self.edit_literature(0, "Курс номер 0", 0, "Новая литература")
+        # Добавление домашнего задания к каждому уроку
+        for course in courses:
+            for i in range(10):
+                self.add_home_work(teachers[course - 1], "Курс: %s" % course, "Info: home_work_%s_%s" % (course, i),
+                                   "2020-01-%s" % i)
+
+        # Добавление 10 занятий для каждого курса
+        for course in courses:
+            for i in range(10):
+                self.add_lesson(teachers[course - 1], "Курс: %s" % course, "2020-01-%s" % i)
+
+        # Запись студента на 3 курса
+        for student in students:
+            for i in random.sample(courses, 3):
+                self.entry_to_course(student, "Курс: %s" % i)
+
+        # Запись студентов в таблицу выполненных домашних заданий (5 штук на каждого)
+        for course in courses:
+            list_student = self.get_students_from_course(teachers[course - 1], "Курс: %s" % course)["students"]
+            list_task = self.get_tasks_from_course(teachers[course - 1], "Курс: %s" % course)["tasks"]
+            for student in list_student:
+                for task in random.sample(list_task, 5):
+                    self.mark_completed_task(teachers[course - 1], "Курс: %s" % course, task["id_task"],
+                                             student["id_student"], random.randint(1, 15))
+
+        # Запись студентов в таблицу посещеных занятий (по 5 на каждого)
+        for course in courses:
+            list_student = self.get_students_from_course(teachers[course - 1], "Курс: %s" % course)["students"]
+            list_lesson = self.get_lessons_from_course(teachers[course - 1], "Курс: %s" % course)["lessons"]
+            for student in list_student:
+                for lesson in random.sample(list_lesson, 5):
+                    self.mark_student_in_class(teachers[course - 1], "Курс: %s" % course, lesson["id_lesson"],
+                                               student["id_student"])
 
 
 if __name__ == '__main__':
     db = DataBase()
-
-    db.mark_completed_task(0,"Курс номер 0", 4, 0, 15)
