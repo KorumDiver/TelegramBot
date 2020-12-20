@@ -60,6 +60,14 @@ async def get_grades(student_id: int) -> []:
 
 
 async def get_students(id_user: int, course_name: str):
+    """
+    Получение списка студентов
+    Args:
+        user_id: Id
+        course_name: Имя курса.
+    Returns:
+        Список список студентов.
+    """
     try:
         ret: [] = db.get_students_from_course(id_user=id_user, name_course=course_name)
         students = ret["students"]
@@ -69,6 +77,14 @@ async def get_students(id_user: int, course_name: str):
 
 
 async def get_average_point(id_user: int, course_name: str):
+    """
+    Получение средней
+    Args:
+        user_id: Id
+        course_name: Имя курса.
+    Returns:
+        Среднее значение баллов по курсу.
+    """
     try:
         students: [] = await get_students(id_user, course_name)
         ratings = [student["rating"] for student in students]
@@ -78,6 +94,14 @@ async def get_average_point(id_user: int, course_name: str):
 
 
 async def get_top(id_user: int, course_name: str):
+    """
+    Рейтинг пользователей по оценкам(от наим к наиб)
+    Args:
+        user_id: Id
+        course_name: Имя курса.
+    Returns:
+        Отсортированный список студентов .
+    """
     try:
         students = await get_students(id_user, course_name)
         for student in students.items():
@@ -90,6 +114,14 @@ async def get_top(id_user: int, course_name: str):
         raise Exception('Что-то пошло не так...')
 
 async def get_task(id_user: int, course_name: str):
+    """
+    Получение домашки
+    Args:
+        user_id: Id
+        course_name: Имя курса.
+    Returns:
+        Список домашки.
+    """
     try:
         ret = await db.get_tasks_from_course(id_user, course_name)
         tasks = ret["tasks"]
