@@ -225,7 +225,7 @@ def take_new_lit(message):
 def deleeete(message):
     if (check(message.chat.id, message.date)):
         # на самом деле здесь из бд удаляется человек по cv_user_id[message.chat.id][2]["course] и mesage.chat.id
-        cv_user_id[message.chat.id][2]["courses"] = ''
+        cv_user_id[message.chat.id][2]["course"] = ''
         bot.send_message(message.chat.id, "Вы успешно удалены")
 
 @bot.message_handler(regexp="К выбору курса")
