@@ -1,4 +1,8 @@
 from MainDirectory.DataBase.DataBase import db
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 class DataProcessor:
     """
@@ -18,7 +22,7 @@ class DataProcessor:
         pass
 
 
-async def get_grades(student_id: int) -> []:
+def get_grades(student_id: int) -> []:
     """
     Получение оценок, студента по курсу
     Args:
@@ -59,7 +63,7 @@ async def get_grades(student_id: int) -> []:
         raise Exception('Что-то пошло не так')
 
 
-async def get_students(id_user: int, course_name: str):
+def get_students(id_user: int, course_name: str):
     """
     Получение списка студентов
     Args:
@@ -76,7 +80,7 @@ async def get_students(id_user: int, course_name: str):
         raise Exception('Что-то пошло не так...')
 
 
-async def get_average_point(id_user: int, course_name: str):
+def get_average_point(id_user: int, course_name: str):
     """
     Получение средней
     Args:
@@ -86,14 +90,14 @@ async def get_average_point(id_user: int, course_name: str):
         Среднее значение баллов по курсу.
     """
     try:
-        students: [] = await get_students(id_user, course_name)
+        students: [] = get_students(id_user, course_name)
         ratings = [student["rating"] for student in students]
         return sum(ratings) / len(ratings)
     except:
         raise Exception('Что-то пошло не так...')
 
 
-async def get_top(id_user: int, course_name: str):
+def get_top(id_user: int, course_name: str):
     """
     Рейтинг пользователей по оценкам(от наим к наиб)
     Args:
@@ -103,8 +107,8 @@ async def get_top(id_user: int, course_name: str):
         Отсортированный список студентов .
     """
     try:
-        students = await get_students(id_user, course_name)
-        for student in students.items():
+        students = get_students(id_user, course_name)
+        for student in students:
             rating = student["rating"]
             student["average_rating"] = sum(rating) / len(rating)
 
@@ -113,7 +117,8 @@ async def get_top(id_user: int, course_name: str):
     except:
         raise Exception('Что-то пошло не так...')
 
-async def get_task(id_user: int, course_name: str):
+
+def get_task(id_user: int, course_name: str):
     """
     Получение домашки
     Args:
@@ -123,8 +128,59 @@ async def get_task(id_user: int, course_name: str):
         Список домашки.
     """
     try:
-        ret = await db.get_tasks_from_course(id_user, course_name)
+        ret = db.get_tasks_from_course(id_user, course_name)
         tasks = ret["tasks"]
         return tasks
     except:
         raise Exception('Что-то пошло не так...')
+
+
+def generate_excel(id_user: int, course_name: str):
+    students: [] = get_students(id_user, course_name)
+
+    # {
+    #     "id_student": i["id_student"],
+    #     "name_student": i["name_student"],
+    #     "surname_student": i["surname_student"],
+    #     "middle_name_student": i["middle_name_student"],
+    #     "rating": i["rating"]
+    # }
+
+    data = {
+        "Имя": [],
+        "Фамилия": [],
+        "Итого": []
+    }
+
+    for student in students:
+        info_student: {} = db.get_info_student(id_user=student["id_student"])
+        courses = info_student["info_about_courses"]
+        target_course = None
+        for course in courses:
+            if course_name == course["name_subject"]:
+                target_course = course
+        if target_course is None:
+            completed_tasks = target_course["completed_tasks"]
+            for completed_task in completed_tasks:
+                completed_task_column = "ДЗ" + completed_task["id"]
+                if data[completed_task_column] is not None:
+                    data[completed_task_column].append(completed_task["point"])
+                else:
+                    data[completed_task_column] = [completed_task["point"]]
+            data["Итого"].append(completed_task_column["rating"])
+
+    dataframe = pd.DataFrame.from_dict(data, orient='index', )
+    dataframe = dataframe.transpose()
+    dataframe.to_excel("test.xlsx", index=False)
+
+def create_diagramm(id_user: int, course_name: str)
+    students_top = get_top(id_user, course_name)
+
+    fig, ax = plt.subplots()
+    plt.xlabel('студент')
+    plt.ylabel('рейтинг')
+
+    for student in students:
+        ax.bar(student["name_student"], student["rating"], color=np.random.rand(3,), width=0.1)
+
+    plt.savefig('raitng.png')
