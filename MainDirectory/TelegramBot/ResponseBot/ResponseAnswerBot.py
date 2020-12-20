@@ -149,7 +149,8 @@ def take_cours1(message):  # он выбрал предмет
 def sign_up_user(c):
     if (check(c.message.chat.id, c.message.date)):
         # Здесь работа с записью в бд
-        bot.answer_callback_query(c.id, text="Вы записаны")
+        bot.answer_callback_query(c.id, text="Вы успешно записаны на курс " + cv_user_id[c.message.chat.id][2]["course"], show_alert=True)
+        bot.delete_message(c.message.chat.id, message_id=c.message.message_id)
         bot.send_message(c.message.chat.id, 'Выберите действие:', reply_markup=start_keyboard())  # отправили главную калвиатуру с мои курсы, записаться и инфо
 
 
@@ -199,9 +200,9 @@ def dz_funcs(message):
 @bot.callback_query_handler(func=lambda call: call.data[0] == 'd' and call.data[1] == 'z')
 def callback_inline(call):
     if (check(call.message.chat.id, call.message.date)):
-        #bot.edit_message_reply_markup(call.message.chat.id, message_id=call.message.message_id - 1, reply_markup='')
+        bot.delete_message(call.message.chat.id, message_id=call.message.message_id)
         num_dz = int(call.data[3])
-        s = dz[num_dz-1]["info"] + "\n\n" + "Сделать до:" + dz[num_dz-1]["deadline"]
+        s = "ДЗ " + call.data[3] + "\n\n" + dz[num_dz-1]["info"] + "\n\n" + "Сделать до: " + dz[num_dz-1]["deadline"]
         bot.answer_callback_query(call.id)
         bot.send_message(call.message.chat.id, s)
 
