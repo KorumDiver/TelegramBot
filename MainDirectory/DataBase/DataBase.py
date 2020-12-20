@@ -13,7 +13,7 @@ class DataBase:
 
     def __init__(self):
         try:
-            self.__connection = mysql.connector.connect(host="127.0.0.1", user="root", password="",
+            self.__connection = mysql.connector.connect(host="127.0.0.1", user="root", password="korum123456",
                                                         database="mydb")
             print("Completed")
         except Error as e:
@@ -27,12 +27,12 @@ class DataBase:
         """
         cursor = self.__connection.cursor()
 
-        request = "select id_teachers from teachers where id_teachers = %s" % id_user
+        request = "select id_teacher from teachers where id_teacher = %s" % id_user
         cursor.execute(request)
         if cursor.fetchall():
             return 2
 
-        request = "select id_students from students where id_students = %s" % id_user
+        request = "select id_student from students where id_student = %s" % id_user
         cursor.execute(request)
         if cursor.fetchall():
             return 1
@@ -75,45 +75,71 @@ class DataBase:
         :param id_user: Токен пользователя
         :return: Словарь вида {id_student | name_student | surname_student | [{rating | id_subject | name_subject}]}
         """
-        request = "select * from view_student_subject where id_student=%s" % id_user
+        request = "select * from students where id_student = %s" % id_user
         cursor = self.__connection.cursor(dictionary=True)
         cursor.execute(request)
         response = cursor.fetchall()
-        ret = {"id_user": id_user,
-               "name_student": response[0]["name_student"],
-               "surname_student": response[0]["surname_student"],
-               "middle_name_student": response[0]["middle_name_student"],
-               "info_about_courses": []}
-        for row in response:
-            completed_tasks = []
-            classes_attend = []
-
-            request = "select * from view_task_student where id_student = %s and id_subject = %s" % (ret["id_user"],
-                                                                                                     row["id_subject"])
+        if len(response) != 0:
+            ret = {"id_user": id_user,
+                   "name_student": response[0]["name"],
+                   "surname_student": response[0]["surname"],
+                   "middle_name_student": response[0]["middle_name"],
+                   "info_about_courses": []}
+            request = "select * from view_student_attend_subject where id_student=%s" % id_user
             cursor.execute(request)
-            for i in cursor.fetchall():
-                completed_tasks.append({"id_task": i["id_task"],
-                                        "info": i["info"],
-                                        "dead_line": i["dead_line"],  # Должна быть датой, но пока так
-                                        "point": i["point"]})
+            response = cursor.fetchall()
+            for row in response:
+                ret["info_about_courses"].append({
+                    "name_course": row["name_subject"],
+                    "name_teacher": str(row["surname_teacher"]) + " " + str(row["name_teacher"]) + " "
+                                    + str(row["middle_name_teacher"]),
+                    "rating": row["rating"]
+                })
+            return ret
+        else:
+            return {}
 
-            request = "select * from view_lesson_student where id_student = %s and id_subject = %s" % (ret["id_user"],
-                                                                                                       row["id_subject"]
-                                                                                                       )
-            cursor.execute(request)
-            for i in cursor.fetchall():
-                classes_attend.append({"id_lesson": i["id_lesson"],
-                                       "date_lesson": i["date"]})
-
-            ret["info_about_courses"].append({"id_subject": row["id_subject"],
-                                              "name_subject": row["name_subject"],
-                                              "name_teacher": row["surname_teacher"] + " " + row["name_teacher"] + " " +
-                                                              row["middle_name_teacher"],
-                                              "rating": row["rating"],
-                                              "completed_tasks": completed_tasks,
-                                              "classes_attend": classes_attend})
-
-        return ret
+    # request = "select * from view_info_student where id_student=%s" % id_user
+    # cursor = self.__connection.cursor(dictionary=True)
+    # cursor.execute(request)
+    # response = cursor.fetchall()
+    # if len(response) == 0:
+    #     return {}
+    # ret = {"id_user": id_user,
+    #        "name_student": response[0]["name_student"],
+    #        "surname_student": response[0]["surname_student"],
+    #        "middle_name_student": response[0]["middle_name_student"],
+    #        "info_about_courses": []}
+    # for row in response:
+    #     completed_tasks = []
+    #     classes_attend = []
+    #
+    #     request = "select * from view_task_student where id_student = %s and id_subject = %s" % (ret["id_user"],
+    #                                                                                              row["id_subject"])
+    #     cursor.execute(request)
+    #     for i in cursor.fetchall():
+    #         completed_tasks.append({"id_task": i["id_task"],
+    #                                 "info": i["info"],
+    #                                 "dead_line": i["dead_line"],  # Должна быть датой, но пока так
+    #                                 "point": i["point"]})
+    #
+    #     request = "select * from view_lesson_student where id_student = %s and id_subject = %s" % (ret["id_user"],
+    #                                                                                                row["id_subject"]
+    #                                                                                                )
+    #     cursor.execute(request)
+    #     for i in cursor.fetchall():
+    #         classes_attend.append({"id_lesson": i["id_lesson"],
+    #                                "date_lesson": i["date"]})
+    #
+    #     ret["info_about_courses"].append({"id_subject": row["id_subject"],
+    #                                       "name_subject": row["name_subject"],
+    #                                       "name_teacher": row["surname_teacher"] + " " + row["name_teacher"] + " " +
+    #                                                       row["middle_name_teacher"],
+    #                                       "rating": row["rating"],
+    #                                       "completed_tasks": completed_tasks,
+    #                                       "classes_attend": classes_attend})
+    #
+    # return ret
 
     def get_home_work(self, name_course: str):
         """
@@ -346,7 +372,7 @@ class DataBase:
         Изменение информация по курсу.
         :param id_user: Токен пользователя
         :param name_course: Название курса. Точно также как в базе.
-        :param new_info: Новая инвормация по курсу
+        :param new_info: Новая информация по курсу
         """
         cursor = self.__connection.cursor()
         cursor.callproc("edit_info_course", (id_user, name_course, new_info))
@@ -434,7 +460,7 @@ class DataBase:
         # Добавление 10 занятий для каждого курса
         for course in courses:
             for i in range(10):
-                self.add_lesson(teachers[course - 1], "Курс: %s" % course, "2020-01-%s" % (i+1))
+                self.add_lesson(teachers[course - 1], "Курс: %s" % course, "2020-01-%s" % (i + 1))
 
         # Запись студента на 3 курса
         for student in students:
@@ -462,4 +488,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    db.random_data()
+    print(db.get_info_student(100000))
