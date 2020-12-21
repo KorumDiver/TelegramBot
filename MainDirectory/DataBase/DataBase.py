@@ -67,6 +67,19 @@ class DataBase:
         cursor.execute(request)
         self.__connection.commit()
 
+    def get_log(self, id_user, role):
+        if role == 1:
+            request = "select log from students where id_student = %s" % id_user
+        elif role == 2:
+            request = "select log from teachers where id_teacher = %s" % id_user
+        else:
+            return [None, None]
+        cursor = self.__connection.cursor()
+        cursor.execute(request)
+        response = cursor.fetchall()
+        log = response[0][0].split(";")
+        return log
+
     # Student __________________________________________________________________________________________________________
     # Получение информаций______________________________________________________________________________________________
     def get_info_student(self, id_user: int):
@@ -99,47 +112,22 @@ class DataBase:
         else:
             return {}
 
-    # request = "select * from view_info_student where id_student=%s" % id_user
-    # cursor = self.__connection.cursor(dictionary=True)
-    # cursor.execute(request)
-    # response = cursor.fetchall()
-    # if len(response) == 0:
-    #     return {}
-    # ret = {"id_user": id_user,
-    #        "name_student": response[0]["name_student"],
-    #        "surname_student": response[0]["surname_student"],
-    #        "middle_name_student": response[0]["middle_name_student"],
-    #        "info_about_courses": []}
-    # for row in response:
-    #     completed_tasks = []
-    #     classes_attend = []
-    #
-    #     request = "select * from view_task_student where id_student = %s and id_subject = %s" % (ret["id_user"],
-    #                                                                                              row["id_subject"])
-    #     cursor.execute(request)
-    #     for i in cursor.fetchall():
-    #         completed_tasks.append({"id_task": i["id_task"],
-    #                                 "info": i["info"],
-    #                                 "dead_line": i["dead_line"],  # Должна быть датой, но пока так
-    #                                 "point": i["point"]})
-    #
-    #     request = "select * from view_lesson_student where id_student = %s and id_subject = %s" % (ret["id_user"],
-    #                                                                                                row["id_subject"]
-    #                                                                                                )
-    #     cursor.execute(request)
-    #     for i in cursor.fetchall():
-    #         classes_attend.append({"id_lesson": i["id_lesson"],
-    #                                "date_lesson": i["date"]})
-    #
-    #     ret["info_about_courses"].append({"id_subject": row["id_subject"],
-    #                                       "name_subject": row["name_subject"],
-    #                                       "name_teacher": row["surname_teacher"] + " " + row["name_teacher"] + " " +
-    #                                                       row["middle_name_teacher"],
-    #                                       "rating": row["rating"],
-    #                                       "completed_tasks": completed_tasks,
-    #                                       "classes_attend": classes_attend})
-    #
-    # return ret
+    def get_my_course(self, id_user, role):
+        """
+        Выдает список курсов на которые ходит/преподает пользоваьель
+        :param id_user: ТОкен пользователя
+        :param role: Роль пользователя
+        :return: Словарь вида {id_subject, name}
+        """
+        if role == 1:
+            request = "select id_subject, name_subject as name from view_student_subject where id_student = %s;" % id_user
+        elif role == 2:
+            request = "select s.id_subject, s.name from teachers as t left join subjects as s on t.id_teacher = " \
+                      "s.id_teacher where s.id_teacher = %s;" % id_user
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        response = cursor.fetchall()
+        return response
 
     def get_home_work(self, name_course: str):
         """
@@ -225,6 +213,17 @@ class DataBase:
         """
         cursor = self.__connection.cursor()
         cursor.callproc("entry_to_course", (id_user, name_course))
+        self.__connection.commit()
+
+    def leave_to_course(self, id_user, name_course):
+        courses = self.get_my_course(id_user, 1)
+        for i in courses:
+            if i["name"] == name_course:
+                id_course = i["id_subject"]
+
+        request = "delete from student_subject where id_student = %s and id_subject = %s" % (id_user, id_course)
+        cursor = self.__connection.cursor()
+        cursor.execute(request)
         self.__connection.commit()
 
     # Изменение информаций______________________________________________________________________________________________
@@ -488,4 +487,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    print(db.get_info_student(100000))
+    db.random_data()
