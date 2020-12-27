@@ -139,11 +139,10 @@ class DataBase:
         cursor = self.__connection.cursor(dictionary=True)
         cursor.execute(request)
         ret = {"name_course": name_course,
-               "tasks": []}
+               "tasks": {}}
         for row in cursor.fetchall():
-            ret['tasks'].append({"id_task": row["id_task"],
-                                 "info_task": row["info"],
-                                 "dead_line": row["dead_line"]})
+            ret['tasks'][row['id_task']] = {"info_task": row["info"],
+                                            "dead_line": row["dead_line"]}
         return ret
 
     def get_literature(self, name_course: str):
@@ -490,4 +489,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    db.random_data()
+    print(db.get_home_work("Курс: 1"))
