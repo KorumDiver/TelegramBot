@@ -431,58 +431,61 @@ class DataBase:
     # ------------------------------------------------------------------------------------------------------------------
     def random_data(self):
         # Создание студентов
-        students = [i for i in range(10 ** 5, 10 ** 5 + 100)]
+        n_student = 500
+        students = [i for i in range(10 ** 5, 10 ** 5 + n_student)]
         for student in students:
             self.registration_user(student, "Имя %s" % student, "Фамилия %s" % student, "Отчество %s" % student, 0)
-
+        print(1)
         # Создание преподователей
-        teachers = [i for i in range(2 * 10 ** 5, 2 * 10 ** 5 + 10)]
+        n_teachers = 10
+        teachers = [i for i in range(2 * 10 ** 5, 2 * 10 ** 5 + n_teachers)]
         for teacher in teachers:
             self.registration_user(teacher, "Имя %s" % teacher, "Фамилия %s" % teacher, "Отчество %s" % teacher, 2)
-
+        print(2)
         # Создание курсов и связка их с преподователем
         courses = [i for i in range(1, len(teachers) + 1)]  # Номера курсов в БД
         for course in courses:
             self.create_course("Курс: %s" % course, "Teacher: %s" % teachers[course - 1], teachers[course - 1])
-
+        print(3)
         # Добавление литературы к каждому курсу
         for course in courses:
-            for i in range(1, 5):
+            for i in range(1, 3):
                 self.add_literature(teachers[course - 1], "Курс: %s" % course, "Literature: course_%s_%s" % (course, i))
-
+        print(4)
         # Добавление домашнего задания к каждому уроку
         for course in courses:
-            for i in range(10):
+            for i in range(5):
                 self.add_home_work(teachers[course - 1], "Курс: %s" % course, "Info: home_work_%s_%s" % (course, i),
                                    "2020-01-%s" % (i + 1))
-
-        # Добавление 10 занятий для каждого курса
+        print(5)
+        # Добавление 5 занятий для каждого курса
         for course in courses:
-            for i in range(10):
+            for i in range(5):
                 self.add_lesson(teachers[course - 1], "Курс: %s" % course, "2020-01-%s" % (i + 1))
-
-        # Запись студента на 3 курса
+        print(6)
+        # Запись студента на 5 курсов
         for student in students:
-            for i in random.sample(courses, 3):
+            for i in random.sample(courses, 5):
                 self.entry_to_course(student, "Курс: %s" % i)
-
+        print(7)
         # Запись студентов в таблицу выполненных домашних заданий (5 штук на каждого)
         for course in courses:
             list_student = self.get_students_from_course(teachers[course - 1], "Курс: %s" % course)["students"]
             list_task = self.get_tasks_from_course(teachers[course - 1], "Курс: %s" % course)["tasks"]
             for student in list_student:
-                for task in random.sample(list_task, 5):
+                for task in random.sample(list_task, 3):
                     self.mark_completed_task(teachers[course - 1], "Курс: %s" % course, task["id_task"],
                                              student["id_student"], random.randint(1, 15))
-
+        print(8)
         # Запись студентов в таблицу посещеных занятий (по 5 на каждого)
         for course in courses:
             list_student = self.get_students_from_course(teachers[course - 1], "Курс: %s" % course)["students"]
             list_lesson = self.get_lessons_from_course(teachers[course - 1], "Курс: %s" % course)["lessons"]
             for student in list_student:
-                for lesson in random.sample(list_lesson, 5):
+                for lesson in random.sample(list_lesson, 3):
                     self.mark_student_in_class(teachers[course - 1], "Курс: %s" % course, lesson["id_lesson"],
                                                student["id_student"])
+        print(9)
 
 
 if __name__ == '__main__':
