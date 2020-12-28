@@ -2,6 +2,7 @@ from MainDirectory.DataBase.DataBase import db
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import pathlib
 
 
 class DataProcessor:
@@ -173,14 +174,50 @@ def generate_excel(id_user: int, course_name: str):
     dataframe = dataframe.transpose()
     dataframe.to_excel("test.xlsx", index=False)
 
-def create_diagramm(id_user: int, course_name: str)
+#3
+
+def create_rating_diagram(id_user: int, course_name: str) -> str:
+    """
+       Создает диаграмму рейтинга студентов по курсу
+       Args:
+           id_user: Id
+           course_name: Имя курса.
+       Returns:
+           Возвращает путь до созданного изображения
+    """
     students_top = get_top(id_user, course_name)
 
     fig, ax = plt.subplots()
     plt.xlabel('студент')
     plt.ylabel('рейтинг')
 
-    for student in students:
-        ax.bar(student["name_student"], student["rating"], color=np.random.rand(3,), width=0.1)
+    for student in students_top:
+        ax.bar(student["name_student"], student["rating"], color=np.random.rand(3, ), width=0.1)
 
-    plt.savefig('raitng.png')
+    # current path
+    path = pathlib.Path().absolute()
+    image_path = path.joinpath("rating_diagram.png")
+    plt.savefig(image_path)
+    return image_path
+
+#2
+def get_course_info(id_user: id, name_course: str) -> []:
+    """
+       Получение списка всех студентов по курсу
+       Args:
+           user_id: Id
+           course_name: Имя курса.
+       Returns:
+           Строка формата: ФИО, кол-во посещений, кол-во заданий, рейтинг
+    """
+    ret = db.get_students_from_course(id_user, name_course)
+    string_to_format = 'ФИО: {}, кол-во посещений: {}, кол-во заданий: {}, рейтинг: {}'
+    students = ret['students']
+
+    students_info = []
+    for student in students:
+        #  не понимаю, откуда брать информацию о кол-ве посещений и заданий
+        student_info = string_to_format.format(student['name_student'], None, None, student['rating'])
+        students_info.append(students)
+
+    return students_info
