@@ -276,7 +276,7 @@ class DataBase:
 
         cursor = self.__connection.cursor()
         cursor.execute(request)
-        return cursor.fetchall()
+        return [i[0] for i in cursor.fetchall()]
 
     def get_count_completed_task(self, name_course):
         request = """
@@ -290,7 +290,7 @@ class DataBase:
         """ % name_course
         cursor = self.__connection.cursor()
         cursor.execute(request)
-        return cursor.fetchall()
+        return [i[0] for i in cursor.fetchall()]
 
     # Получение информаций (преподователь)
     def get_students_from_course(self, id_user: int, name_course: str):
@@ -579,4 +579,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    db.get_students_not_completed_task(1, "Курс: 11", 1);
+    print(db.get_count_completed_task("Курс: 11"))
