@@ -298,6 +298,38 @@ class DataBase:
         else:
             print("Данный преподователь не имеет доступа к данным записям!!!")
 
+    def get_students_completed_task(self, id_user, name_course, id_task):
+        request = """
+                select s.* from task_student as t_s
+                    left join students as s
+                        on t_s.id_student = s.id_student
+                    where t_s.id_task = %s;
+                        """ % id_task
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        response = cursor.fetchall()
+        ret = {"name_subject": name_course,
+               "students": response}
+        return ret
+
+    def get_students_not_completed_task(self, id_user, name_course, id_task):
+        request = """
+                     select stud.* from (select id_subject from tasks where id_task = %s) as url_hw
+                        left join student_subject as s_s
+                            on s_s.id_subject = url_hw.id_subject
+                        left join students as stud
+                            on stud.id_student= s_s.id_student
+                            where stud.id_student not in (select s.id_student as id_student from task_student as t_s
+                        left join students as s
+                        on t_s.id_student = s.id_student
+                    where t_s.id_task = %s);""" % (id_task,id_task)
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        response = cursor.fetchall()
+        ret = {"name_subject": name_course,
+               "students": response}
+        return ret
+
     def get_lessons_from_course(self, id_user: int, name_course: str):
         """
         Выдает список всех занятий по определенному курсу
@@ -518,4 +550,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    db.random_data()
+    db.get_students_not_completed_task(1, "Курс: 11", 1);
