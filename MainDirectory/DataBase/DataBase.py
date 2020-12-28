@@ -112,6 +112,21 @@ class DataBase:
         else:
             return {}
 
+    def get_info_teacher(self, id_user):
+        request = "select * from teachers where id_teacher=%s" % id_user
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        response = cursor.fetchall()[0]
+        text = response['surname'] + ' ' + response['name'] + " " + response[
+            "middle_name"] + '\nКурсы на которых преподает:\n'
+
+        request = "select name from subjects where id_teacher = %s" % id_user
+        cursor.execute(request)
+        response = cursor.fetchall()
+        for i in response:
+            text += i["name"] + "\n"
+        return text
+
     def get_my_course(self, id_user, role):
         """
         Выдает список курсов на которые ходит/преподает пользоваьель
@@ -197,7 +212,7 @@ class DataBase:
         :param id_user: Токен пользователя
         :return: Список
         """
-        request = """select id_subject, name as name_subject from subjects where id_subject not in (select id_subject 
+        request = """select id_subject, name from subjects where id_subject not in (select id_subject 
                      from view_student_subject where id_student=%s) order by id_subject;""" % id_user
         cursor = self.__connection.cursor(dictionary=True)
         cursor.execute(request)
@@ -398,6 +413,7 @@ class DataBase:
         :param new_info_literature: Строка с измененной информацией
         """
         cursor = self.__connection.cursor()
+        print(id_user, name_course, num_literature, new_info_literature)
         cursor.callproc("edit_literature", (id_user, name_course, num_literature, new_info_literature))
         self.__connection.commit()
 
@@ -427,6 +443,19 @@ class DataBase:
         cursor.callproc("mark_completed_task", (id_user, name_course, id_task, id_student, point))
         self.__connection.commit()
 
+    def edit_completed_task(self, id_user: int, name_course: str, id_task: int, id_student: int, point: int):
+        request = "update task_student set point = %s where id_task = %s and id_student = %s" % (
+            point, id_task, id_student)
+        cursor = self.__connection.cursor()
+        cursor.execute(request)
+        self.__connection.commit()
+
+    def delete_completed_task(self, id_task, id_student):
+        request = "delete from task_student where id_task = %s and id_student = %s" % (id_task, id_student)
+        cursor = self.__connection.cursor()
+        cursor.execute(request)
+        self.__connection.commit()
+
     # ------------------------------------------------------------------------------------------------------------------
     def random_data(self):
         # Создание студентов
@@ -437,7 +466,7 @@ class DataBase:
         print(1)
         # Создание преподователей
         n_teachers = 10
-        teachers = [i for i in range(2 * 10 ** 5, 2 * 10 ** 5 + n_teachers)]
+        teachers = [*[i for i in range(2 * 10 ** 5, 2 * 10 ** 5 + n_teachers)], 485330050]
         for teacher in teachers:
             self.registration_user(teacher, "Имя %s" % teacher, "Фамилия %s" % teacher, "Отчество %s" % teacher, 2)
         print(2)
@@ -489,4 +518,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    print(db.get_home_work("Курс: 1"))
+    db.random_data()
