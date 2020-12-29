@@ -5,6 +5,24 @@ import numpy as np
 import pathlib
 
 
+class DataProcessor:
+    """
+    Данный класс реализует статистическую обработку данных по командам из ResponseAnswerBot.
+
+    Тербуется реализовать набор разных статистических обработчиков. В основном в методы должен приходить список данных
+    и отдаваться список или словарь полученных значений.
+
+    Плюсом будет возможность построения гистограмм и графиков с последующим выводом изображений в сообщение пользователю.
+    (Но это не обязательно)
+    """
+
+    def __init__(self, db):
+        """
+        Инициализирует нужные переменные в классе. Импортирует библиотеки
+        """
+        pass
+
+
 def get_grades(student_id: int) -> []:
     """
     Получение оценок, студента по курсу
@@ -194,12 +212,14 @@ def get_course_info(id_user: id, name_course: str) -> []:
            Строка формата: ФИО, кол-во посещений, кол-во заданий, рейтинг
     """
     ret = db.get_students_from_course(id_user, name_course)
-    string_to_format = '{}: посещений {}/{}, заданий {}/{}, рейтинг {}'
+    string_to_format = 'ФИО: {}, кол-во посещений: {}, кол-во заданий: {}, рейтинг: {}'
     students = ret['students']
-    students_info = ''
+
+    students_info = []
     for student in students:
         #  не понимаю, откуда брать информацию о кол-ве посещений и заданий
-        students_info += string_to_format.format(student['name_student'], None, None, None, None, student['rating']) + '\n'
+        student_info = string_to_format.format(student['name_student'], None, None, student['rating'])
+        students_info.append(students)
 
     return students_info
 
@@ -209,7 +229,7 @@ def plot_number_of_attended_lessons_diagram(id_user: int, course_name: str) -> s
     values = db.get_count_lessons(course_name)
 
     fig, ax = plt.subplots()
-    plt.ylabel('Количество посещенных уроков')
+    plt.ylabel('количество посещенных уроков')
 
     for index, value in enumerate(values):
         ax.bar(index, value, color=np.random.rand(3, ), width=0.1)
