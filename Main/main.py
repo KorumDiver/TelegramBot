@@ -401,33 +401,26 @@ def completed_task_students(call, mode):
         for i in ret['students']:
             inline_markup.row(
                 types.InlineKeyboardButton(i['surname'] + " " + i["name"] + " " + i["middle_name"],
-                                           callback_data='refact_stud-' + dz_id + "-" + str(i['id_student'])))
+                                           callback_data='refact_stud-' + dz_id + "-" + i['id_student']))
     elif mode == 'deny':
         for i in ret['students']:
             inline_markup.row(
                 types.InlineKeyboardButton(i['surname'] + " " + i["name"] + " " + i["middle_name"],
-                                           callback_data='comp_stud-' + dz_id + "-" + str(i['id_student'])))
+                                           callback_data='comp_stud-' + dz_id + "-" + i['id_student']))
     inline_markup.row(types.InlineKeyboardButton('Назад', callback_data='mark_dz-' + str(dz_id)))
     return inline_markup
 
 
-def not_completed_task_students(call, mode):
+def not_completed_task_students(call):
     dz_id = call.data.split('-')[1]
     user = check(call.message.chat.id)
     ret = db.get_students_not_completed_task(1, user['log'][1], dz_id)
     inline_markup = types.InlineKeyboardMarkup()
-    if mode == 'accept':
-        for i in ret['students']:
-            inline_markup.row(
-                types.InlineKeyboardButton(
-                    i['surname'] + " " + i["name"] + " " + i["middle_name"],
-                    callback_data='ac_stud-' + dz_id + "-" + str(i['id_student'])))
-    elif mode == 'refactor':
-        for i in ret['students']:
-            inline_markup.row(
-                types.InlineKeyboardButton(
-                    i['surname'] + " " + i["name"] + " " + i["middle_name"],
-                    callback_data='refact_stud-' + dz_id + "-" + str(i['id_student'])))
+    for i in ret['students']:
+        inline_markup.row(
+            types.InlineKeyboardButton(
+                i['surname'] + " " + i["name"] + " " + i["middle_name"],
+                callback_data='ac_stud-' + dz_id + "-" + str(i['id_student'])))
     inline_markup.row(types.InlineKeyboardButton('Назад', callback_data='mark_dz-' + dz_id))
     return inline_markup
 
@@ -662,8 +655,7 @@ def callback_deny_dz(call):
 def denying_dz(call):
     user = check(call.message.chat.id)
     # удаление из базы
-    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,
-                                  reply_markup=completed_task_students(call, 'deny'))
+    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=completed_task_students(call, 'deny'))
     bot.answer_callback_query(call.id)
     bot.send_message(call.message.chat.id, 'Задание удалено!')
 
