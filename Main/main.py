@@ -655,9 +655,11 @@ def callback_deny_dz(call):
 def denying_dz(call):
     user = check(call.message.chat.id)
     # удаление из базы
-    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=completed_task_students(call, 'deny'))
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.answer_callback_query(call.id)
     bot.send_message(call.message.chat.id, 'Задание удалено!')
+    bot.send_message(call.message.chat.id, 'По нажатии на студента сдача будет отменена:',
+                     reply_markup=completed_task_students(call, 'deny'))
 
 
 bot.polling(none_stop=True)
