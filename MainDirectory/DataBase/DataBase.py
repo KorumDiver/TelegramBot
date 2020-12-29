@@ -553,7 +553,14 @@ class DataBase:
                 if i['id_task'] == j["id_task"]:
                     i['point'] = j['point']
         return ret
-        # ------------------------------------------------------------------------------------------------------------------
+
+    def del_mark_completed_task(self, id_task, id_stud):
+        request = "delete from task_student where id_student =%s and id_task = %s" % (id_stud, id_task)
+        cursor = self.__connection.cursor()
+        cursor.execute(request)
+        self.__connection.commit()
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     def random_data(self):
         # Создание студентов

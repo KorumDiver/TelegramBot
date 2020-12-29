@@ -3,10 +3,11 @@ import datetime
 import telebot
 from telebot import types
 import MainDirectory.DataBase.DataBase as database
+import MainDirectory.DataProcessor.DataProcessor as da
 
 my = "839505966:AAGv0SHKb_jSQ_M6YUdx9G-SGSLS9MxHAF8"
 bot = telebot.TeleBot(my)
-db = database.DataBase()
+db = da.db
 
 # pool = {id_user: {role, last_time, log:[мой курсы/записаться, название курса]}
 # pool = {id_user: {role, last_time, log:[мой курсы, название курса]}
@@ -363,7 +364,17 @@ def mark_visit(id_user):
 
 
 def work_on_student(id_user):
-    pass
+    user = check(id_user)
+    inline_markup = types.InlineKeyboardMarkup()
+    inline_markup.row(types.InlineKeyboardButton('Все студенты', callback_data='all_stud'))
+    ret = db.get_students_from_course(id_user, user['log'][1])
+    for i in ret['students']:
+        FIO = i['surname_student'] + " " + i['name_student'] + " " + i["middle_name_student"]
+        id_stud = i['id_student']
+        rating = i['rating']
+        inline_markup.row(types.InlineKeyboardButton(FIO, callback_data='one_stud-' + str(id_stud) + '-' + str(rating)))
+    bot.send_message(id_user, 'Вы хотите работать с конкретным студентом или же со всеми сразу?',
+                     reply_markup=inline_markup)
 
 
 @bot.message_handler(func=lambda message: message.text in [*courses_command_key, choose_course_button])
@@ -401,12 +412,12 @@ def completed_task_students(call, mode):
         for i in ret['students']:
             inline_markup.row(
                 types.InlineKeyboardButton(i['surname'] + " " + i["name"] + " " + i["middle_name"],
-                                           callback_data='refact_stud-' + dz_id + "-" + i['id_student']))
+                                           callback_data='refact_stud-' + str(dz_id) + "-" + str(i['id_student'])))
     elif mode == 'deny':
         for i in ret['students']:
             inline_markup.row(
                 types.InlineKeyboardButton(i['surname'] + " " + i["name"] + " " + i["middle_name"],
-                                           callback_data='comp_stud-' + dz_id + "-" + i['id_student']))
+                                           callback_data='comp_stud-' + str(dz_id) + "-" + str(i['id_student'])))
     inline_markup.row(types.InlineKeyboardButton('Назад', callback_data='mark_dz-' + str(dz_id)))
     return inline_markup
 
@@ -420,8 +431,8 @@ def not_completed_task_students(call):
         inline_markup.row(
             types.InlineKeyboardButton(
                 i['surname'] + " " + i["name"] + " " + i["middle_name"],
-                callback_data='ac_stud-' + dz_id + "-" + str(i['id_student'])))
-    inline_markup.row(types.InlineKeyboardButton('Назад', callback_data='mark_dz-' + dz_id))
+                callback_data='ac_stud-' + str(dz_id) + "-" + str(i['id_student'])))
+    inline_markup.row(types.InlineKeyboardButton('Назад', callback_data='mark_dz-' + str(dz_id)))
     return inline_markup
 
 
@@ -436,7 +447,10 @@ def callback_dz(call):
     bot.answer_callback_query(call.id)
     if user['role'] == 2:
         inline_markup = types.InlineKeyboardMarkup()
-        inline_markup.row(types.InlineKeyboardButton('Редактировать', callback_data='edit_dz-' + data[1] + '-' + data[2] + '-' + ret['tasks'][int(data[1])]["info_task"] + '-' + str(ret['tasks'][int(data[1])]["dead_line"])),
+        inline_markup.row(types.InlineKeyboardButton('Редактировать',
+                                                     callback_data='edit_dz-' + data[1] + '-' + data[2] + '-' +
+                                                                   ret['tasks'][int(data[1])]["info_task"] + '-' + str(
+                                                         ret['tasks'][int(data[1])]["dead_line"])),
                           types.InlineKeyboardButton('Удалить', callback_data='del_dz-' + data[1]))
         inline_markup.row(types.InlineKeyboardButton('Отметить выполнение', callback_data='mark_dz-' + data[1]))
         bot.send_message(call.message.chat.id, s, reply_markup=inline_markup)
@@ -485,7 +499,8 @@ def enter_new_deadline(message, s):
     for i in ret['students']:
         try:
             bot.send_message(i['id_student'],
-                             user['log'][1] + '\n\nСоздано новое ДЗ!\n\n' + task['info_task'] + "\n\nВыполнить до " + str(task['dead_line']))
+                             user['log'][1] + '\n\nСоздано новое ДЗ!\n\n' + task[
+                                 'info_task'] + "\n\nВыполнить до " + str(task['dead_line']))
         except:
             continue
 
@@ -500,7 +515,8 @@ def callback_edit_dz(call):
     inline_markup = types.InlineKeyboardMarkup()
     inline_markup.add(types.InlineKeyboardButton('Отмена', callback_data='cancel_dz'))
     msg = bot.send_message(call.message.chat.id, 'Введите новый текст:', reply_markup=inline_markup)
-    bot.register_next_step_handler(msg, edit_homework, call.data.split('-')[1], call.data.split('-')[2], call.data.split('-')[3], call.data.split('-')[4])
+    bot.register_next_step_handler(msg, edit_homework, call.data.split('-')[1], call.data.split('-')[2],
+                                   call.data.split('-')[3], call.data.split('-')[4])
 
 
 def edit_homework(message, dz_id, dz_num, dz_info, dz_deadline):
@@ -512,7 +528,8 @@ def edit_homework(message, dz_id, dz_num, dz_info, dz_deadline):
     for i in ret['students']:
         try:
             bot.send_message(i['id_student'],
-                             user['log'][1] + '\n\nДЗ ' + dz_num + 'было отредактировано!\n\n' + dz_info + "\n\nВыполнить до " + dz_deadline)
+                             user['log'][
+                                 1] + '\n\nДЗ ' + dz_num + 'было отредактировано!\n\n' + dz_info + "\n\nВыполнить до " + dz_deadline)
         except:
             continue
 
@@ -565,7 +582,7 @@ def accepting_dz(call):
     bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.answer_callback_query(call.id)
     bot.send_message(call.message.chat.id, 'По нажатии на студента сдача автоматически засчитается:',
-                     reply_markup=not_completed_task_students(call, 'accept'))
+                     reply_markup=not_completed_task_students(call))
 
 
 @bot.callback_query_handler(func=lambda call: 'ac_stud' in call.data)
@@ -602,7 +619,7 @@ def enter_point(message, id_stud, id_task, call):
                            points)  # запись отметки в бд
     bot.send_message(message.chat.id, 'Задание успешно сдано!')
     bot.send_message(call.message.chat.id, 'По нажатии на студента сдача автоматически засчитается:',
-                     reply_markup=not_completed_task_students(call, 'accept'))
+                     reply_markup=not_completed_task_students(call))
 
 
 @bot.callback_query_handler(func=lambda call: 'refactor_dz' in call.data)
@@ -660,12 +677,83 @@ def callback_deny_dz(call):
 @bot.callback_query_handler(func=lambda call: 'comp_stud' in call.data)
 def denying_dz(call):
     user = check(call.message.chat.id)
-    # удаление из базы
+    db.del_mark_completed_task(*call.data.split('-')[1:])
     bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.answer_callback_query(call.id)
     bot.send_message(call.message.chat.id, 'Задание удалено!')
     bot.send_message(call.message.chat.id, 'По нажатии на студента сдача будет отменена:',
                      reply_markup=completed_task_students(call, 'deny'))
+
+
+# работа со студентами
+@bot.callback_query_handler(func=lambda call: call.data == 'all_stud')
+def all_stud_work(call):
+    user = check(call.message.chat.id)
+    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup='')
+    bot.answer_callback_query(call.id, 'Режим работы со всеми студентами')
+    inline_markup = types.InlineKeyboardMarkup()
+    inline_markup.row(types.InlineKeyboardButton('Краткий журнал', callback_data='short_jurn'))
+    inline_markup.row(types.InlineKeyboardButton('Журнал', callback_data='jurnal'),
+                      types.InlineKeyboardButton('Анализ', callback_data='analiz'))
+    bot.send_message(call.message.chat.id, 'Выберите действие:', reply_markup=inline_markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'short_jurn')
+def show_short_jurnal(call):
+    user = check(call.message.chat.id)
+    bot.answer_callback_query(call.id)
+    short_j = da.get_course_info(call.message.chat.id, user['log'][1])
+    bot.send_message(call.message.chat.id, short_j)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'jurnal')
+def show_short_jurnal(call):
+    user = check(call.message.chat.id)
+    bot.answer_callback_query(call.id, 'Файл сформирован')
+    # bot.send_document(call.message.chat.id, )
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'analiz')
+def show_analiz(call):
+    user = check(call.message.chat.id)
+    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup='')
+    bot.answer_callback_query(call.id)
+    inline_markup = types.InlineKeyboardMarkup()
+    inline_markup.row(types.InlineKeyboardButton('Гистограма по рейтингу', callback_data='rat_hist'))
+    inline_markup.row(types.InlineKeyboardButton('Гистограма по посещаемости', callback_data='visit_hist'))
+    inline_markup.row(types.InlineKeyboardButton('Выполнение дз', callback_data='plot_dz'))
+    bot.send_message(call.message.chat.id, 'Что вы хотите получить?', reply_markup=inline_markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'rat_hist')
+def show_rating_hist(call):
+    user = check(call.message.chat.id)
+    image_path = da.create_rating_diagram(call.message.chat.id, user['log'][1])
+    bot.send_photo(call.message.chat.id, open(image_path, 'rb'))
+    bot.answer_callback_query(call.id, 'Изображение построено')
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'visit_hist')
+def show_visit_hist(call):
+    user = check(call.message.chat.id)
+    image_path = da.plot_number_of_attended_lessons_diagram(call.message.chat.id, user['log'][1])
+    bot.send_photo(call.message.chat.id, open(image_path, 'rb'))
+    bot.answer_callback_query(call.id, 'Изображение построено')
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'plot_dz')
+def show_plot_bar_dz(call):
+    user = check(call.message.chat.id)
+    image_path = da.plot_performed_homeworks_diagram(call.message.chat.id, user['log'][1])
+    bot.send_photo(call.message.chat.id, open(image_path, 'rb'))
+    bot.answer_callback_query(call.id, 'Изображение построено')
+
+
+@bot.callback_query_handler(func=lambda call: 'one_stud' in call.data)
+def callback_one_stud(call):
+    user = check(call.message.chat.id)
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.answer_callback_query(call.id)
 
 
 bot.polling(none_stop=True)
