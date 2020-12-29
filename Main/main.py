@@ -512,7 +512,7 @@ def edit_homework(message, dz_id, dz_num, dz_info, dz_deadline):
     for i in ret['students']:
         try:
             bot.send_message(i['id_student'],
-                             user['log'][1] + '\n\nДЗ ' + dz_num + 'было отредактировано!\n\n' + dz_info + "\n\nВыполнить до " + dz_deadline)
+                             user['log'][1] + '\n\nДЗ ' + dz_num + ' было отредактировано!\n\n' + dz_info + "\n\nВыполнить до: " + dz_deadline)
         except:
             continue
 
