@@ -2,6 +2,7 @@ import datetime
 
 import telebot
 # import MainDirectory.DataBase.DataBase as database
+import MainDirectory.DataProcessor.DataProcessor as da
 from telebot import types
 
 bot = telebot.TeleBot("1438178504:AAF5-LIj7iPbGZWmPT8vOJJeGHjyjH3NTiQ")
@@ -391,6 +392,7 @@ def all_stud_work(call):
 def show_short_jurnal(call):
     user = check(call.message.chat.id)
     bot.answer_callback_query(call.id)
+    da
     bot.send_message(call.message.chat.id, 'Здесь будет краткий журнал по всем студентам')
 
 @bot.callback_query_handler(func=lambda call: call.data == 'jurnal')
