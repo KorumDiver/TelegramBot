@@ -392,8 +392,8 @@ def all_stud_work(call):
 def show_short_jurnal(call):
     user = check(call.message.chat.id)
     bot.answer_callback_query(call.id)
-    da
-    bot.send_message(call.message.chat.id, 'Здесь будет краткий журнал по всем студентам')
+    short_j = da.get_course_info(call.message.chat.id, user['log'][1])
+    bot.send_message(call.message.chat.id, short_j)
 
 @bot.callback_query_handler(func=lambda call: call.data == 'jurnal')
 def show_short_jurnal(call):
@@ -417,23 +417,30 @@ def show_analiz(call):
 @bot.callback_query_handler(func=lambda call: call.data == 'rat_hist')
 def show_rating_hist(call):
     user = check(call.message.chat.id)
+    image_path = da.create_rating_diagram(call.message.chat.id, user['log'][1])
+    bot.send_photo(call.message.chat.id, open(image_path, 'rb'))
     bot.answer_callback_query(call.id, 'Изображение построено')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'visit_hist')
 def show_visit_hist(call):
     user = check(call.message.chat.id)
+    image_path = da.plot_number_of_attended_lessons_diagram(call.message.chat.id, user['log'][1])
+    bot.send_photo(call.message.chat.id, open(image_path, 'rb'))
     bot.answer_callback_query(call.id, 'Изображение построено')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'plot_dz')
 def show_plot_bar_dz(call):
     user = check(call.message.chat.id)
+    image_path = da.plot_performed_homeworks_diagram(call.message.chat.id, user['log'][1])
+    bot.send_photo(call.message.chat.id, open(image_path, 'rb'))
     bot.answer_callback_query(call.id, 'Изображение построено')
 
 
 @bot.callback_query_handler(func=lambda call: 'one_stud' in call.data)
 def callback_one_stud(call):
+    user = check(call.message.chat.id)
     bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.answer_callback_query(call.id)
 
