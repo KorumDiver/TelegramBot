@@ -452,17 +452,22 @@ class DataBase:
         cursor.callproc("edit_info_course", (id_user, name_course, new_info))
         self.__connection.commit()
 
-    def edit_home_work(self, id_user: int, name_course: str, num_task: int, new_info: str, new_dead_line: str):
+    def edit_home_work(self, id_user: int, name_course: str, num_task: int, new_info: str):
         """
         Изменяет конкретное дз в выборке
         :param id_user: Токен пользователя
         :param name_course: Название курса
-        :param num_task: Номер задания в выборке по курсу (начинаем с 0) # TODO Отметить функцию выдающую такую выборку
+        :param num_task: Номер задания в выборке по курсу (начинаем с 0)
         :param new_info: Новая информация по ДЗ
-        :param new_dead_line: Новый dead line
         """
         cursor = self.__connection.cursor()
-        cursor.callproc("edit_home_work", (id_user, name_course, num_task, new_info, new_dead_line))
+        cursor.callproc("edit_home_work", (num_task, new_info))
+        self.__connection.commit()
+
+    def delete_home_work(self, id_task):
+        request = "delete from tasks where id_task = %s" % id_task
+        cursor = self.__connection.cursor()
+        cursor.execute(request)
         self.__connection.commit()
 
     def edit_literature(self, id_user: int, name_course: str, num_literature: int, new_info_literature: str):
@@ -520,7 +525,7 @@ class DataBase:
     # ------------------------------------------------------------------------------------------------------------------
     def random_data(self):
         # Создание студентов
-        n_student = 500
+        n_student = 100
         students = [i for i in range(10 ** 5, 10 ** 5 + n_student)]
         for student in students:
             self.registration_user(student, "Имя %s" % student, "Фамилия %s" % student, "Отчество %s" % student, 0)
@@ -554,7 +559,7 @@ class DataBase:
         print(6)
         # Запись студента на 5 курсов
         for student in students:
-            for i in random.sample(courses, 5):
+            for i in random.sample(courses, 1):
                 self.entry_to_course(student, "Курс: %s" % i)
         print(7)
         # Запись студентов в таблицу выполненных домашних заданий (5 штук на каждого)
@@ -579,4 +584,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    print(db.get_count_completed_task("Курс: 11"))
+    db.random_data()
