@@ -175,7 +175,6 @@ def generate_excel(id_user: int, course_name: str):
     dataframe.to_excel("test.xlsx", index=False)
 
 #3
-
 def create_rating_diagram(id_user: int, course_name: str) -> str:
     """
        Создает диаграмму рейтинга студентов по курсу
@@ -199,6 +198,32 @@ def create_rating_diagram(id_user: int, course_name: str) -> str:
     image_path = path.joinpath("rating_diagram.png")
     plt.savefig(image_path)
     return image_path
+
+#кол-во выполнений домашней работы
+def create_diargram(id_user: int,) -> str:
+    """
+        Создает диаграмму кол-во выполненной домашки относительно кол-ва всех домашек
+        Args:
+            id_user: Id
+            course_name: Имя курса.
+        Returns:
+            Возвращает путь до созданного изображения
+     """
+    homework_list =
+
+    fig, ax = plt.subplots()
+    plt.xlabel('Домашние работы')
+    plt.ylabel('Кол-во выполнений')
+
+    for student in homework_list:
+        ax.bar(student["name_student"], student["rating"], color=np.random.rand(3, ), width=0.1)
+
+    # current path
+    path = pathlib.Path().absolute()
+    image_path = path.joinpath("homework_diagram.png")
+    plt.savefig(image_path)
+    return image_path
+
 
 #2
 def get_course_info(id_user: id, name_course: str) -> []:
