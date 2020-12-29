@@ -263,6 +263,35 @@ class DataBase:
     # инфу о том, что в ему отказано в доступе, то скажите мне и я буду возврящать True или False при успешных
     # и не успешных операциях соответственнно.
 
+    def get_count_lessons(self, name_course):
+        request = """
+        select count(l_s.id_student) from subjects as s
+            left join lessons as l
+                on l.id_subject = s.id_subject
+            left join lesson_student as l_s
+                on l.id_lesson = l_s.id_lesson
+        where s.name = '%s'
+        group by s.name , l.id_lesson;
+        """ % name_course
+
+        cursor = self.__connection.cursor()
+        cursor.execute(request)
+        return [i[0] for i in cursor.fetchall()]
+
+    def get_count_completed_task(self, name_course):
+        request = """
+        select count(T_s.id_student) from subjects as s
+            left join tasks as t
+                on t.id_subject = s.id_subject
+            left join task_student as t_s
+                on t.id_task = t_s.id_task
+        where s.name = '%s'
+        group by s.name , t.id_task;
+        """ % name_course
+        cursor = self.__connection.cursor()
+        cursor.execute(request)
+        return [i[0] for i in cursor.fetchall()]
+
     # Получение информаций (преподователь)
     def get_students_from_course(self, id_user: int, name_course: str):
         """
@@ -297,6 +326,38 @@ class DataBase:
             return ret
         else:
             print("Данный преподователь не имеет доступа к данным записям!!!")
+
+    def get_students_completed_task(self, id_user, name_course, id_task):
+        request = """
+                select s.* from task_student as t_s
+                    left join students as s
+                        on t_s.id_student = s.id_student
+                    where t_s.id_task = %s;
+                        """ % id_task
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        response = cursor.fetchall()
+        ret = {"name_subject": name_course,
+               "students": response}
+        return ret
+
+    def get_students_not_completed_task(self, id_user, name_course, id_task):
+        request = """
+                     select stud.* from (select id_subject from tasks where id_task = %s) as url_hw
+                        left join student_subject as s_s
+                            on s_s.id_subject = url_hw.id_subject
+                        left join students as stud
+                            on stud.id_student= s_s.id_student
+                            where stud.id_student not in (select s.id_student as id_student from task_student as t_s
+                        left join students as s
+                        on t_s.id_student = s.id_student
+                    where t_s.id_task = %s);""" % (id_task, id_task)
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        response = cursor.fetchall()
+        ret = {"name_subject": name_course,
+               "students": response}
+        return ret
 
     def get_lessons_from_course(self, id_user: int, name_course: str):
         """
@@ -518,4 +579,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    db.random_data()
+    print(db.get_count_completed_task("Курс: 11"))
