@@ -485,8 +485,7 @@ def enter_new_deadline(message, s):
     for i in ret['students']:
         try:
             bot.send_message(i['id_student'],
-                             'Создано новое ДЗ!\n\n' + task['info_task'] + '\n\n' + "Выполнить до " + str(
-                                 task['dead_line']))
+                             user['log'][1] + '\n\nСоздано новое ДЗ!\n\n' + task['info_task'] + "\n\nВыполнить до " + str(task['dead_line']))
         except:
             continue
 
@@ -611,7 +610,7 @@ def callback_refactor_dz(call):
 @bot.callback_query_handler(func=lambda call: 'refact_stud' in call.data)
 def refactoring_dz(call):
     user = check(call.message.chat.id)
-    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup='')
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.answer_callback_query(call.id,
                               'Отправленный вами текст будет сохранён! Нажмите "Отмена" для прерывания операции',
                               show_alert=True)
