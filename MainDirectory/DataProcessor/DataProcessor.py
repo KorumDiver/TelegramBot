@@ -174,8 +174,8 @@ def generate_excel(id_user: int, course_name: str):
     dataframe = dataframe.transpose()
     dataframe.to_excel("test.xlsx", index=False)
 
-#3
 
+# 3
 def create_rating_diagram(id_user: int, course_name: str) -> str:
     """
        Создает диаграмму рейтинга студентов по курсу
@@ -200,7 +200,8 @@ def create_rating_diagram(id_user: int, course_name: str) -> str:
     plt.savefig(image_path)
     return image_path
 
-#2
+
+# 2
 def get_course_info(id_user: id, name_course: str) -> []:
     """
        Получение списка всех студентов по курсу
@@ -221,3 +222,37 @@ def get_course_info(id_user: id, name_course: str) -> []:
         students_info.append(students)
 
     return students_info
+
+
+# 4
+def plot_number_of_attended_lessons_diagram(id_user: int, course_name: str) -> str:
+    values = db.get_count_lessons(course_name)
+
+    fig, ax = plt.subplots()
+    plt.ylabel('количество посещенных уроков')
+
+    for index, value in enumerate(values):
+        ax.bar(index, value, color=np.random.rand(3, ), width=0.1)
+
+    # current path
+    path = pathlib.Path().absolute()
+    image_path = path.joinpath("number_of_attended_lessons_diagram.png")
+    plt.savefig(image_path)
+    return image_path
+
+
+# 5
+def plot_performed_homeworks_diagram(id_user: int, course_name: str) -> str:
+    values = db.get_count_completed_task(course_name)
+
+    fig, ax = plt.subplots()
+    plt.ylabel('количество выполненных дз')
+
+    for index, value in enumerate(values):
+        ax.bar(index, value, color=np.random.rand(3, ), width=0.1)
+
+    # current path
+    path = pathlib.Path().absolute()
+    image_path = path.joinpath("performed_homeworks_diagram.png")
+    plt.savefig(image_path)
+    return image_path
