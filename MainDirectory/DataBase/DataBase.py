@@ -522,7 +522,39 @@ class DataBase:
         cursor.execute(request)
         self.__connection.commit()
 
-    # ------------------------------------------------------------------------------------------------------------------
+    def get_excel_tasks(self, id_stud, name_course):
+        request = """
+                    select s.*, t_s.id_task, t_s.point from students as s
+            left join task_student as t_s
+                on s.id_student = t_s.id_student
+            where s.id_student = %s;
+        """ % id_stud
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        students_task = cursor.fetchall()
+        print(students_task)
+
+        request = """
+                select t.id_task from subjects as s
+                    left join tasks as t
+                        on t.id_subject = s.id_subject
+                    where s.name = '%s';
+        """ % name_course
+        cursor.execute(request)
+        tasks = cursor.fetchall()
+        ret = {'id_student': students_task[0]['id_student'],
+               'name': students_task[0]['name'],
+               'surname': students_task[0]['surname'],
+               'middle_name': students_task[0]['middle_name'],
+               'tasks': [{'id_task': i['id_task'], "point": 0} for i in tasks]}
+
+        for i in ret['tasks']:
+            for j in students_task:
+                if i['id_task'] == j["id_task"]:
+                    i['point'] = j['point']
+        return ret
+        # ------------------------------------------------------------------------------------------------------------------
+
     def random_data(self):
         # Создание студентов
         n_student = 100
@@ -584,5 +616,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    print(db.get_students_completed_task(1, "Курс: 11", 110))
-    print(db.get_students_not_completed_task(1, "Курс: 11", 110))
+    print(db.get_excel_tasks(462218663, "Курс: 11"))
