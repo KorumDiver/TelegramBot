@@ -436,7 +436,7 @@ def callback_dz(call):
     bot.answer_callback_query(call.id)
     if user['role'] == 2:
         inline_markup = types.InlineKeyboardMarkup()
-        inline_markup.row(types.InlineKeyboardButton('Редактировать', callback_data='edit_dz-' + data[1] + data[2] + ret['tasks'][int(data[1])]["info_task"] + str(ret['tasks'][int(data[1])]["dead_line"])),
+        inline_markup.row(types.InlineKeyboardButton('Редактировать', callback_data='edit_dz-' + data[1] + '-' + data[2] + '-' + ret['tasks'][int(data[1])]["info_task"] + '-' + str(ret['tasks'][int(data[1])]["dead_line"])),
                           types.InlineKeyboardButton('Удалить', callback_data='del_dz-' + data[1]))
         inline_markup.row(types.InlineKeyboardButton('Отметить выполнение', callback_data='mark_dz-' + data[1]))
         bot.send_message(call.message.chat.id, s, reply_markup=inline_markup)
