@@ -436,7 +436,7 @@ def callback_dz(call):
     bot.answer_callback_query(call.id)
     if user['role'] == 2:
         inline_markup = types.InlineKeyboardMarkup()
-        inline_markup.row(types.InlineKeyboardButton('Редактировать', callback_data='edit_dz-' + data[1]),
+        inline_markup.row(types.InlineKeyboardButton('Редактировать', callback_data='edit_dz-' + data[1] + data[2] + ret['tasks'][int(data[1])]["info_task"] + str(ret['tasks'][int(data[1])]["dead_line"])),
                           types.InlineKeyboardButton('Удалить', callback_data='del_dz-' + data[1]))
         inline_markup.row(types.InlineKeyboardButton('Отметить выполнение', callback_data='mark_dz-' + data[1]))
         bot.send_message(call.message.chat.id, s, reply_markup=inline_markup)
@@ -500,14 +500,21 @@ def callback_edit_dz(call):
     inline_markup = types.InlineKeyboardMarkup()
     inline_markup.add(types.InlineKeyboardButton('Отмена', callback_data='cancel_dz'))
     msg = bot.send_message(call.message.chat.id, 'Введите новый текст:', reply_markup=inline_markup)
-    bot.register_next_step_handler(msg, edit_homework, call.data.split('-')[1])
+    bot.register_next_step_handler(msg, edit_homework, call.data.split('-')[1], call.data.split('-')[2], call.data.split('-')[3], call.data.split('-')[4])
 
 
-def edit_homework(message, dz_id):
+def edit_homework(message, dz_id, dz_num, dz_info, dz_deadline):
     user = check(message.chat.id)
     db.edit_home_work(message.chat.id, user['log'][1], dz_id, message.text)
     bot.delete_message(message.chat.id, message_id=message.message_id - 1)
     bot.send_message(message.chat.id, 'Изменения сохранены!')
+    ret = db.get_students_from_course(message.chat.id, user['log'][1])
+    for i in ret['students']:
+        try:
+            bot.send_message(i['id_student'],
+                             user['log'][1] + '\n\nДЗ ' + dz_num + 'было отредактировано!\n\n' + dz_info + "\n\nВыполнить до " + dz_deadline)
+        except:
+            continue
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'cancel_dz')
