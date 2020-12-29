@@ -123,7 +123,8 @@ def student_work(message):
     for i in ret['students']:
         FIO = i['surname_student'] + " " + i['name_student'] + " " + i["middle_name_student"]
         id_stud = i['id_student']
-        inline_markup.row(types.InlineKeyboardButton(FIO, callback_data='one_stud-' + str(id_stud)))
+        rating = i['rating']
+        inline_markup.row(types.InlineKeyboardButton(FIO, callback_data='one_stud-' + str(id_stud) + '-' + str(rating)))
     bot.send_message(message.chat.id, 'Вы хотите работать с конкретным студентом или же со всеми сразу?', reply_markup=inline_markup)
 
 
@@ -145,8 +146,7 @@ def callback_dz(call):
            "tasks": {}}
     for i in range(3):
         ret['tasks'][(str)(i + 1)] = {"info_task": "info" + (str)(i + 1), "dead_line": "dead_line" + (str)(i + 1)}
-    bot.edit_message_reply_markup(call.message.chat.id, message_id=call.message.message_id,
-                                  reply_markup='')  # удаление страой инлайн-клавиатуры
+    bot.delete_message(call.message.chat.id, message_id=call.message.message_id)  # удаление строго сообщения
     data = call.data.split('-')
     s = 'ДЗ ' + data[2] + "\n\n" + ret['tasks'][data[1]]["info_task"] + "\n\n" + "Сделать до: " + ret['tasks'][data[1]][
         "dead_line"]
@@ -196,7 +196,7 @@ def enter_new_deadline(message, s):
         bot.register_next_step_handler(msg, enter_new_deadline, s)
         return
     task = {"info_task": s, "dead_line": time}
-    # занесение в бд новой домашки
+    #занесение нового дз
     bot.send_message(message.chat.id, 'Задание успешно создано')
     #ret = database.get_students_from_course(message.chat.id, user['log'][1])
     ret = {'students':[{'id_student':418531001}, {'id_student':485330050}]}
@@ -220,14 +220,14 @@ def callback_edit_dz(call):
 def edit_homework(message, dz_id):
     user = check(message.chat.id)
     # здесь идет загрузка в бд
-    bot.edit_message_reply_markup(message.chat.id, message_id=message.message_id - 1, reply_markup='')
+    bot.delete_message(message.chat.id, message_id=message.message_id - 1)
     bot.send_message(message.chat.id, 'Изменения сохранены!')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'cancel_dz')
 def finish_editing_dz(call):
     user = check(call.message.chat.id)
-    bot.edit_message_reply_markup(call.message.chat.id, message_id=call.message.message_id, reply_markup='')
+    bot.delete_message(call.message.chat.id, message_id=call.message.message_id)
     bot.answer_callback_query(call.id, 'Операция отменена')
     bot.clear_step_handler(call.message)
 
@@ -428,6 +428,12 @@ def show_visit_hist(call):
 def show_plot_bar_dz(call):
     user = check(call.message.chat.id)
     bot.answer_callback_query(call.id, 'Изображение построено')
+
+
+@bot.callback_query_handler(func=lambda call: 'one_stud' in call.data)
+def callback_one_stud(call):
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.answer_callback_query(call.id)
 
 
 bot.polling(none_stop=True)
