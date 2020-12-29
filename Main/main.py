@@ -517,7 +517,7 @@ def callback_delete_dz(call):
     dz_id = call.data.split('-')[1]
     inline_markup = types.InlineKeyboardMarkup()
     inline_markup.row(types.InlineKeyboardButton('Подтвердить', callback_data='confirm_delete_dz-' + dz_id),
-                      types.InlineKeyboardButton('Отмена', callback_data='cancel_delete_dz-' + dz_id))
+                      types.InlineKeyboardButton('Отмена', callback_data='cancel_dz'))
     bot.send_message(call.message.chat.id, 'Вы желаете удалить данное задание?', reply_markup=inline_markup)
 
 
@@ -526,23 +526,14 @@ def deleting_dz(call):
     user = check(call.message.chat.id)
     dz_id = call.data.split('-')[1]
     db.delete_home_work(dz_id)
-    bot.edit_message_reply_markup(call.message.chat.id, message_id=call.message.message_id, reply_markup='')
+    bot.delete_message(call.message.chat.id, message_id=call.message.message_id)
     bot.answer_callback_query(call.id, 'Задание удалено!')
-
-
-@bot.callback_query_handler(func=lambda call: 'cancel_delete_dz' in call.data)
-def finish_del_dz(call):
-    user = check(call.message.chat.id)
-    dz_id = call.data.split('-')[1]
-    bot.edit_message_reply_markup(call.message.chat.id, message_id=call.message.message_id, reply_markup='')
-    bot.answer_callback_query(call.id)
-    bot.send_message(call.message.chat.id, 'Удаление отменено!')
 
 
 @bot.callback_query_handler(func=lambda call: 'mark_dz' in call.data)
 def callback_mark_dz(call):
     user = check(call.message.chat.id)
-    bot.edit_message_reply_markup(call.message.chat.id, message_id=call.message.message_id, reply_markup='')
+    bot.delete_message(call.message.chat.id, message_id=call.message.message_id)
     bot.answer_callback_query(call.id)
     inline_markup = types.InlineKeyboardMarkup()
     dz_id = call.data.split('-')[1]
@@ -555,7 +546,7 @@ def callback_mark_dz(call):
 @bot.callback_query_handler(func=lambda call: 'accept_dz' in call.data)
 def accepting_dz(call):
     user = check(call.message.chat.id)
-    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup='')
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.answer_callback_query(call.id)
     bot.send_message(call.message.chat.id, 'По нажатии на студента сдача автоматически засчитается:',
                      reply_markup=not_completed_task_students(call, 'accept'))
@@ -600,7 +591,7 @@ def enter_point(message, id_stud, id_task, call):
 @bot.callback_query_handler(func=lambda call: 'refactor_dz' in call.data)
 def callback_refactor_dz(call):
     user = check(call.message.chat.id)
-    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup='')
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.answer_callback_query(call.id)
     bot.send_message(call.message.chat.id, 'По нажатии на студента начнётся редактирование баллов за данное задание:',
                      reply_markup=not_completed_task_students(call, 'refactor'))
@@ -644,7 +635,7 @@ def enter_new_point(message, call, id_stud, id_task):
 def callback_deny_dz(call):
     user = check(call.message.chat.id)
     bot.answer_callback_query(call.id)
-    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup='')
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.send_message(call.message.chat.id, 'По нажатии на студента сдача будет отменена:',
                      reply_markup=completed_task_students(call))
 
