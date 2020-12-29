@@ -584,4 +584,5 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    db.random_data()
+    print(db.get_students_completed_task(1, "Курс: 11", 110))
+    print(db.get_students_not_completed_task(1, "Курс: 11", 110))

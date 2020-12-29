@@ -392,12 +392,23 @@ courses_command_dict = dict(
 
 
 # _____________________________________________________________________________________________________________________
+def completed_task_students(call):
+    dz_id = call.data.split('-')[1]
+    user = check(call.message.chat.id)
+    ret = db.get_students_completed_task(1, user['log'][1], dz_id)
+    inline_markup = types.InlineKeyboardMarkup()
+    for i in ret['students']:
+        inline_markup.row(
+            types.InlineKeyboardButton(i['surname'] + " " + i["name"] + " " + i["middle_name"],
+                                       callback_data='comp_stud-' + str(dz_id) + "-" + str(i['id_student'])))
+    inline_markup.row(types.InlineKeyboardButton('Назад', callback_data='mark_dz-' + str(dz_id)))
+    return inline_markup
+
 
 def not_completed_task_students(call, mode):
     dz_id = call.data.split('-')[1]
     user = check(call.message.chat.id)
     ret = db.get_students_not_completed_task(1, user['log'][1], dz_id)
-    print(ret)
     inline_markup = types.InlineKeyboardMarkup()
     if mode == 'accept':
         for i in ret['students']:
@@ -582,7 +593,8 @@ def enter_point(message, id_stud, id_task, call):
         msg = bot.send_message(message.chat.id, 'Введите количество баллов', reply_markup=inline_markup)
         bot.register_next_step_handler(msg, enter_point, id_stud, id_task, call)
         return
-    db.mark_completed_task(message.chat.id, pool[message.chat.id]['log'][1], int(id_task), int(id_stud), points) # запись отметки в бд
+    db.mark_completed_task(message.chat.id, pool[message.chat.id]['log'][1], int(id_task), int(id_stud),
+                           points)  # запись отметки в бд
     bot.send_message(message.chat.id, 'Задание успешно сдано!')
     bot.send_message(call.message.chat.id, 'По нажатии на студента сдача автоматически засчитается:',
                      reply_markup=not_completed_task_students(call, 'accept'))
@@ -594,7 +606,7 @@ def callback_refactor_dz(call):
     bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.answer_callback_query(call.id)
     bot.send_message(call.message.chat.id, 'По нажатии на студента начнётся редактирование баллов за данное задание:',
-                     reply_markup=not_completed_task_students(call, 'refactor'))
+                     reply_markup=completed_task_students(call))
 
 
 @bot.callback_query_handler(func=lambda call: 'refact_stud' in call.data)
@@ -604,12 +616,12 @@ def refactoring_dz(call):
     bot.answer_callback_query(call.id,
                               'Отправленный вами текст будет сохранён! Нажмите "Отмена" для прерывания операции',
                               show_alert=True)
-    id_stud = call.data.split('-')[1]
-    id_task = call.data.split('-')[2]
+    id_stud = call.data.split('-')[2]
+    id_task = call.data.split('-')[1]
     inline_markup = types.InlineKeyboardMarkup()
     inline_markup.row(types.InlineKeyboardButton('Отмена', callback_data='cancel_dz'))
     msg = bot.send_message(call.message.chat.id, 'Введите количество баллов', reply_markup=inline_markup)
-    bot.register_next_step_handler(msg, enter_new_point, id_stud, id_task, call)
+    bot.register_next_step_handler(msg, enter_new_point, call, id_stud, id_task)
 
 
 def enter_new_point(message, call, id_stud, id_task):
@@ -625,10 +637,10 @@ def enter_new_point(message, call, id_stud, id_task):
         msg = bot.send_message(message.chat.id, 'Введите количество баллов', reply_markup=inline_markup)
         bot.register_next_step_handler(msg, enter_new_point, id_stud, id_task, call)
         return
-    # изменение записей в бд
+    db.edit_completed_task(1, user['log'][1], id_task, id_stud, points)
     bot.send_message(message.chat.id, 'Изменения сохранены!')
     bot.send_message(message.chat.id, 'По нажатии на студента начнётся редактирование баллов за данное задание:',
-                     reply_markup=not_completed_task_students(call, 'refactor'))
+                     reply_markup=completed_task_students(call))
 
 
 @bot.callback_query_handler(func=lambda call: 'deny_dz' in call.data)
@@ -647,7 +659,7 @@ def denying_dz(call):
     bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id,
                                   reply_markup=completed_task_students(call))
     bot.answer_callback_query(call.id)
-    bot.send_message(call.message.chat.id, s)
+    bot.send_message(call.message.chat.id, 'Задание удалено!')
 
 
 bot.polling(none_stop=True)
