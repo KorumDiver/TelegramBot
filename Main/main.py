@@ -627,10 +627,10 @@ def enter_new_point(message, call, id_stud, id_task):
     user = check(message.chat.id)
     try:
         points = int(message.text)
-        bot.edit_message_reply_markup(message.chat.id, message_id=message.message_id - 1, reply_markup='')
+        bot.delete_message(message.chat.id, message_id=message.message_id - 1)
     except:
         bot.send_message(message.chat.id, 'Неверный формат. Введите баллы корректно!')
-        bot.edit_message_reply_markup(message.chat.id, message_id=message.message_id - 1, reply_markup='')
+        bot.delete_message(message.chat.id, message_id=message.message_id - 1)
         inline_markup = types.InlineKeyboardMarkup()
         inline_markup.row(types.InlineKeyboardButton('Отмена', callback_data='cancel_dz'))
         msg = bot.send_message(message.chat.id, 'Введите количество баллов', reply_markup=inline_markup)
