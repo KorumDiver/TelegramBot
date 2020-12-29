@@ -404,13 +404,13 @@ def not_completed_task_students(call, mode):
             inline_markup.row(
                 types.InlineKeyboardButton(
                     i['surname'] + " " + i["name"] + " " + i["middle_name"],
-                    callback_data='ac_stud-' + str(i['id_student']) + "-" + dz_id))
+                    callback_data='ac_stud-' + dz_id + "-" + str(i['id_student'])))
     elif mode == 'refactor':
         for i in ret['students']:
             inline_markup.row(
                 types.InlineKeyboardButton(
                     i['surname'] + " " + i["name"] + " " + i["middle_name"],
-                    callback_data='refact_stud-' + str(i['id_student']) + "-" + dz_id))
+                    callback_data='refact_stud-' + dz_id + "-" + str(i['id_student'])))
     inline_markup.row(types.InlineKeyboardButton('Назад', callback_data='mark_dz-' + dz_id))
     return inline_markup
 
@@ -557,8 +557,8 @@ def accept_student(call):
     user = check(call.message.chat.id)
     bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup='')
     bot.answer_callback_query(call.id)
-    id_stud = call.data.split('-')[1]
-    id_task = call.data.split('-')[2]
+    id_stud = call.data.split('-')[2]
+    id_task = call.data.split('-')[1]
     accepting_entering(call, id_stud, id_task)
 
 
