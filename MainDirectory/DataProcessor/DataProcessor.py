@@ -242,14 +242,13 @@ def get_course_info(id_user: id, name_course: str) -> []:
            Строка формата: ФИО, кол-во посещений, кол-во заданий, рейтинг
     """
     ret = db.get_students_from_course(id_user, name_course)
-    string_to_format = 'ФИО: {}, кол-во посещений: {}, кол-во заданий: {}, рейтинг: {}'
+    string_to_format = '{}: посещений {}/{}, заданий {}/{}, рейтинг {}'
     students = ret['students']
-
-    students_info = []
+    students_info = ''
     for student in students:
         #  не понимаю, откуда брать информацию о кол-ве посещений и заданий
-        student_info = string_to_format.format(student['name_student'], None, None, student['rating'])
-        students_info.append(students)
+        students_info += string_to_format.format(student['name_student'], None, None, None, None,
+                                                 student['rating']) + '\n'
 
     return students_info
 
