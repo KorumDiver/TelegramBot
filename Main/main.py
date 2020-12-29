@@ -529,7 +529,7 @@ def edit_homework(message, dz_id, dz_num, dz_info, dz_deadline):
         try:
             bot.send_message(i['id_student'],
                              user['log'][
-                                 1] + '\n\nДЗ ' + dz_num + 'было отредактировано!\n\n' + dz_info + "\n\nВыполнить до " + dz_deadline)
+                                 1] + '\n\nДЗ ' + dz_num + ' было отредактировано!\n\n' + dz_info + "\n\nВыполнить до: " + dz_deadline)
         except:
             continue
 
@@ -707,10 +707,11 @@ def show_short_jurnal(call):
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'jurnal')
-def show_short_jurnal(call):
+def show_jurnal(call):
     user = check(call.message.chat.id)
     bot.answer_callback_query(call.id, 'Файл сформирован')
-    # bot.send_document(call.message.chat.id, )
+    doc_path = da.generate_excel(call.message.chat.id, user['log'][1])
+    bot.send_document(call.message.chat.id, open(doc_path, 'rb'))
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'analiz')
