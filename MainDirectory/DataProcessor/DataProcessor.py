@@ -150,29 +150,59 @@ def generate_excel(id_user: int, course_name: str):
     data = {
         "Имя": [],
         "Фамилия": [],
-        "Итого": []
     }
 
+    sum = []
+    course_name = "name_course1"
+
+    home_works = {
+        "tasks": {
+            1: {
+                "info_task": "asasf"
+            },
+            2: {
+                "info_task": "asasf"
+            },
+            3: {
+                "info_task": "asasf"
+            }
+        }
+    }
+    #
+    # ret = {"name_course": name_course,
+    #        "tasks": {}}
+    # for row in cursor.fetchall():
+    #     ret['tasks'][row['id_task']] = {"info_task": row["info"],
+    #                                     "dead_line": row["dead_line"]}
     for student in students:
-        info_student: {} = db.get_info_student(id_user=student["id_student"])
-        courses = info_student["info_about_courses"]
+
+        data['Имя'].append(student['name_student'])
+        data['Фамилия'].append(student['surname_student'])
+
+        courses = student["info_about_courses"]
         target_course = None
         for course in courses:
-            if course_name == course["name_subject"]:
+            if course_name == course["name_course"]:
                 target_course = course
-        if target_course is None:
-            completed_tasks = target_course["completed_tasks"]
-            for completed_task in completed_tasks:
-                completed_task_column = "ДЗ" + completed_task["id"]
-                if data[completed_task_column] is not None:
-                    data[completed_task_column].append(completed_task["point"])
-                else:
-                    data[completed_task_column] = [completed_task["point"]]
-            data["Итого"].append(completed_task_column["rating"])
 
-    dataframe = pd.DataFrame.from_dict(data, orient='index', )
-    dataframe = dataframe.transpose()
-    dataframe.to_excel("test.xlsx", index=False)
+            if target_course is not None:
+                for task_id in home_works['tasks'].keys():
+                    # {surname_student: ["asdasd", "sdfsdfs", "sdfsdfs"]
+                    completed = {"name_subject": course_name,
+                                 "students": ["фамилия студента", "фамилия студента2", "фамилия студента1"]}
+
+                    if student['surname_student'] in completed['students']:
+                        completed_task_column = "ДЗ" + str(task_id)
+                        if completed_task_column in data is not None:
+                            data[completed_task_column].append(5)
+                        else:
+                            data[completed_task_column] = [5]
+                sum.append(target_course["rating"])
+
+        data["Итого"] = sum
+        dataframe = pd.DataFrame.from_dict(data, orient='index', )
+        dataframe = dataframe.transpose()
+        dataframe.to_excel("test.xlsx", index=False)
 
 
 # 3
