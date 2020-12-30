@@ -1,10 +1,9 @@
-import MainDirectory.DataBase.DataBase as database
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import pathlib
 
-db = database.DataBase()
+db = DataBase.DataBase()
 
 
 def get_grades(student_id: int) -> []:

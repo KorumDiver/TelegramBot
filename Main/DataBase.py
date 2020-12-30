@@ -610,7 +610,7 @@ class DataBase:
         print(1)
         # Создание преподователей
         n_teachers = 4
-        teachers = [*[i for i in range(n_teachers)], 485330050, 418531001]
+        teachers = [*[i for i in range(n_teachers)], 418531001]
         for teacher in teachers:
             self.registration_user(teacher, "Имя %s" % teacher, "Фамилия %s" % teacher, "Отчество %s" % teacher, 2)
         print(2)
@@ -634,6 +634,8 @@ class DataBase:
         for course in courses:
             for i in range(3):
                 self.add_lesson(teachers[course - 1], "Курс: %s" % course, "2020-01-%s" % (i + 1))
+            self.add_lesson(teachers[course - 1], "Курс: %s" % course, "2021-01-%s" % 1)
+            self.add_lesson(teachers[course - 1], "Курс: %s" % course, "2020-05-%s" % 1)
         print(6)
         # Запись студента на 2 курса
         for student in students:
