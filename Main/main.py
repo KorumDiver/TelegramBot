@@ -707,7 +707,7 @@ def show_short_jurnal(call):
     bot.send_message(call.message.chat.id, short_j)
 
 
-@bot.callback_query_handler(func=lambda call: call.data == 'jurnal')
+@bot.callback_query_handler(func=lambda call: call.data == 'journal')
 def show_jurnal(call):
     user = check(call.message.chat.id)
     bot.answer_callback_query(call.id, 'Файл сформирован')
