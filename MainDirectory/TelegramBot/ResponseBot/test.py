@@ -483,40 +483,26 @@ def callback_attendance(call):
 
 def mark_att_keyboard(call):
     user = check(call.message.chat.id)
-    # TODO здесь нужно извлечь из бд список студентов, которые еще не отмечены на данном занятии
     id_lesson = call.data.split('-')[1]
     date_lesson = call.data.split('-')[2]
-    ret = {"students": []}
-    for i in range(3):
-        ret['students'].append({"id_student": (str)(i + 1),
-                                "name_student": 'Эмиль' + (str)(i + 1),
-                                "surname_student": 'Закиев' + (str)(i + 1),
-                                "middle_name_student": 'Рамилевич' + (str)(i + 1),
-                                "rating": '10000000' + (str)(i + 1)})
+    ret = database.list_not_mark_student_in_class(id_lesson)
     inline_markup = types.InlineKeyboardMarkup()
     for i in ret['students']:
-        inline_markup.row(types.InlineKeyboardButton(i['surname_student'] + ' ' + i['name_student'] + ' ' +
-                                                     i['middle_name_student'], callback_data='not_here-' + id_lesson + '-' +date_lesson + '-' + str(i['id_student'])))
+        inline_markup.row(types.InlineKeyboardButton(i['surname'] + ' ' + i['name'] + ' ' +
+                                                     i['middle_name'], callback_data='not_here-' + id_lesson + '-' +date_lesson + '-' + str(i['id_student'])))
     inline_markup.row(types.InlineKeyboardButton('Назад', callback_data='att-' + id_lesson + '-' + date_lesson))
     return inline_markup
 
 
 def not_mark_att_keyboard(call):
     user = check(call.message.chat.id)
-    # TODO здесь нужно извлечь из бд список студентов, которые уже отмечены на данном занятии
     id_lesson = call.data.split('-')[1]
     date_lesson = call.data.split('-')[2]
-    ret = {"students": []}
-    for i in range(3):
-        ret['students'].append({"id_student": (str)(i + 1),
-                                "name_student": 'Эмиль' + (str)(i + 1),
-                                "surname_student": 'Закиев' + (str)(i + 1),
-                                "middle_name_student": 'Рамилевич' + (str)(i + 1),
-                                "rating": '10000000' + (str)(i + 1)})
+    ret = database.list_mark_student_in_class(id_lesson)
     inline_markup = types.InlineKeyboardMarkup()
     for i in ret['students']:
-        inline_markup.row(types.InlineKeyboardButton(i['surname_student'] + ' ' + i['name_student'] + ' ' +
-                                                     i['middle_name_student'], callback_data='is_here-' + id_lesson + '-' +date_lesson + '-' + str(i['id_student'])))
+        inline_markup.row(types.InlineKeyboardButton(i['surname'] + ' ' + i['name'] + ' ' +
+                                                     i['middle_name'], callback_data='is_here-' + id_lesson + '-' +date_lesson + '-' + str(i['id_student'])))
     inline_markup.row(types.InlineKeyboardButton('Назад', callback_data='att-' + id_lesson + '-' + date_lesson))
     return inline_markup
 
