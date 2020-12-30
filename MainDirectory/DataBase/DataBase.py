@@ -487,6 +487,36 @@ class DataBase:
         cursor.callproc("edit_literature", (id_user, name_course, num_literature, new_info_literature))
         self.__connection.commit()
 
+    def list_mark_student_in_class(self, id_lesson):
+        request = """select s.* from lesson_student as l
+                        left join students as s
+                            on s.id_student = l.id_student
+                        where l.id_lesson = %s
+                    """ % id_lesson
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        response = cursor.fetchall()
+        return response
+
+    def list_not_mark_student_in_class(self, id_lesson):
+        request = """select stud.* from lessons as l
+                            left join subjects as sub
+                                on l.id_subject = sub.id_subject
+                            left join student_subject as s_s
+                                on s_s.id_subject = sub.id_subject
+                            left join students as stud
+                                on stud.id_student = s_s.id_student
+                            where l.id_lesson=%s and stud.id_student not in (select s.id_student from lesson_student
+                                                                                                                    as l
+															left join students as s
+																on s.id_student = l.id_student
+															where l.id_lesson = %s);
+                            """ % (id_lesson, id_lesson)
+        cursor = self.__connection.cursor(dictionary=True)
+        cursor.execute(request)
+        response = cursor.fetchall()
+        return response
+
     # Функций отметки
     def mark_student_in_class(self, id_user: int, name_course: str, id_lesson: int, id_student: int):
         """
@@ -498,6 +528,12 @@ class DataBase:
         """
         cursor = self.__connection.cursor()
         cursor.callproc("mark_student_in_class", (id_user, name_course, id_lesson, id_student))
+        self.__connection.commit()
+
+    def not_mark_student_in_class(self, id_student, id_lesson):
+        request = "delete from lesson_student where id_student = %s and id_lesson = %s" % (id_student, id_lesson)
+        cursor = self.__connection.cursor()
+        cursor.execute(request)
         self.__connection.commit()
 
     def mark_completed_task(self, id_user: int, name_course: str, id_task: int, id_student: int, point: int):
@@ -567,14 +603,14 @@ class DataBase:
 
     def random_data(self):
         # Создание студентов
-        n_student = 100
-        students = [i for i in range(10 ** 5, 10 ** 5 + n_student)]
+        n_student = 60
+        students = [i for i in range(0, n_student)]
         for student in students:
             self.registration_user(student, "Имя %s" % student, "Фамилия %s" % student, "Отчество %s" % student, 0)
         print(1)
         # Создание преподователей
-        n_teachers = 10
-        teachers = [*[i for i in range(2 * 10 ** 5, 2 * 10 ** 5 + n_teachers)], 485330050]
+        n_teachers = 4
+        teachers = [*[i for i in range(n_teachers)], 485330050, 418531001]
         for teacher in teachers:
             self.registration_user(teacher, "Имя %s" % teacher, "Фамилия %s" % teacher, "Отчество %s" % teacher, 2)
         print(2)
@@ -590,18 +626,18 @@ class DataBase:
         print(4)
         # Добавление домашнего задания к каждому уроку
         for course in courses:
-            for i in range(5):
+            for i in range(4):
                 self.add_home_work(teachers[course - 1], "Курс: %s" % course, "Info: home_work_%s_%s" % (course, i),
                                    "2020-01-%s" % (i + 1))
         print(5)
         # Добавление 5 занятий для каждого курса
         for course in courses:
-            for i in range(5):
+            for i in range(3):
                 self.add_lesson(teachers[course - 1], "Курс: %s" % course, "2020-01-%s" % (i + 1))
         print(6)
-        # Запись студента на 5 курсов
+        # Запись студента на 2 курса
         for student in students:
-            for i in random.sample(courses, 1):
+            for i in random.sample(courses, 2):
                 self.entry_to_course(student, "Курс: %s" % i)
         print(7)
         # Запись студентов в таблицу выполненных домашних заданий (5 штук на каждого)
@@ -626,4 +662,4 @@ class DataBase:
 
 if __name__ == '__main__':
     db = DataBase()
-    print(db.get_excel_tasks(462218663, "Курс: 11"))
+    db.random_data()
