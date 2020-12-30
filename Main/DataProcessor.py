@@ -2,8 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import pathlib
+import Main.DataBase
 
-db = DataBase.DataBase()
+db = Main.DataBase.DataBase()
 
 
 def get_grades(student_id: int) -> []:
@@ -124,9 +125,9 @@ def generate_excel(id_user: int, course_name: str):
                                        student['rating']]
     dataframe = pd.DataFrame(data)
     ren = {0: "Имя", 1: "Фамилия"}
-    for i in range(2, len(data_student['tasks'])+2):
-        ren[i] = "ДЗ %s" % (i-1)
-    ren[len(data_student['tasks'])+2] = "Итого"
+    for i in range(2, len(data_student['tasks']) + 2):
+        ren[i] = "ДЗ %s" % (i - 1)
+    ren[len(data_student['tasks']) + 2] = "Итого"
 
     dataframe = dataframe.rename(ren)
     dataframe = dataframe.transpose()
