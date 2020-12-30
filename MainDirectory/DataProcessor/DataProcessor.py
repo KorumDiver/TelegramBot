@@ -115,75 +115,29 @@ def get_task(id_user: int, course_name: str):
 
 
 def generate_excel(id_user: int, course_name: str):
-    students: [] = get_students(id_user, course_name)
+    students = db.get_students_from_course(id_user, course_name)['students']
+    data = {}
 
-    # {
-    #     "id_student": i["id_student"],
-    #     "name_student": i["name_student"],
-    #     "surname_student": i["surname_student"],
-    #     "middle_name_student": i["middle_name_student"],
-    #     "rating": i["rating"]
-    # }
-
-    data = {
-        "Имя": [],
-        "Фамилия": [],
-    }
-
-    sum = []
-    course_name = "name_course1"
-
-    home_works = {
-        "tasks": {
-            1: {
-                "info_task": "asasf"
-            },
-            2: {
-                "info_task": "asasf"
-            },
-            3: {
-                "info_task": "asasf"
-            }
-        }
-    }
-    #
-    # ret = {"name_course": name_course,
-    #        "tasks": {}}
-    # for row in cursor.fetchall():
-    #     ret['tasks'][row['id_task']] = {"info_task": row["info"],
-    #                                     "dead_line": row["dead_line"]}
     for student in students:
+        data_student = db.get_excel_tasks(student["id_student"], course_name)
+        data[student['id_student']] = [student['name_student'], data_student['surname'],
+                                       *[i['point'] for i in data_student["tasks"]],
+                                       student['rating']]
+    dataframe = pd.DataFrame(data)
+    ren = {0: "Имя", 1: "Фамилия"}
+    for i in range(2, len(data_student['tasks'])+2):
+        ren[i] = "ДЗ %s" % (i-1)
+    ren[len(data_student['tasks'])+2] = "Итого"
 
-        data['Имя'].append(student['name_student'])
-        data['Фамилия'].append(student['surname_student'])
-
-        courses = student["info_about_courses"]
-        target_course = None
-        for course in courses:
-            if course_name == course["name_course"]:
-                target_course = course
-
-            if target_course is not None:
-                for task_id in home_works['tasks'].keys():
-                    # {surname_student: ["asdasd", "sdfsdfs", "sdfsdfs"]
-                    completed = {"name_subject": course_name,
-                                 "students": ["фамилия студента", "фамилия студента2", "фамилия студента1"]}
-
-                    if student['surname_student'] in completed['students']:
-                        completed_task_column = "ДЗ" + str(task_id)
-                        if completed_task_column in data is not None:
-                            data[completed_task_column].append(5)
-                        else:
-                            data[completed_task_column] = [5]
-                sum.append(target_course["rating"])
-
-        data["Итого"] = sum
-        dataframe = pd.DataFrame.from_dict(data, orient='index', )
-        dataframe = dataframe.transpose()
-        dataframe.to_excel("test.xlsx", index=False)
+    dataframe = dataframe.rename(ren)
+    dataframe = dataframe.transpose()
+    dataframe.to_excel("journal.xlsx", index=False)
+    path = pathlib.Path().absolute()
+    doc_path = path.joinpath("journal.xlsx")
+    return doc_path
+    # 3
 
 
-# 3
 def create_rating_diagram(id_user: int, course_name: str) -> str:
     """
        Создает диаграмму рейтинга студентов по курсу
@@ -256,7 +210,7 @@ def plot_performed_homeworks_diagram(id_user: int, course_name: str) -> str:
     plt.ylabel('количество выполненных дз')
 
     for index, value in enumerate(values):
-        ax.bar(index+1, value, color=np.random.rand(3, ), width=0.5)
+        ax.bar(index + 1, value, color=np.random.rand(3, ), width=0.5)
 
     # current path
     path = pathlib.Path().absolute()

@@ -318,11 +318,15 @@ class DataBase:
                    "name_subject": response[0]["name_subject"],
                    "students": []}
             for i in response:
+                if i['rating'] is None:
+                    rating = 0
+                else:
+                    rating = i['rating']
                 ret["students"].append({"id_student": i["id_student"],
                                         "name_student": i["name_student"],
                                         "surname_student": i["surname_student"],
                                         "middle_name_student": i["middle_name_student"],
-                                        "rating": i["rating"]})
+                                        "rating": rating})
             return ret
         else:
             print("Данный преподователь не имеет доступа к данным записям!!!")
@@ -532,7 +536,6 @@ class DataBase:
         cursor = self.__connection.cursor(dictionary=True)
         cursor.execute(request)
         students_task = cursor.fetchall()
-        print(students_task)
 
         request = """
                 select t.id_task from subjects as s
