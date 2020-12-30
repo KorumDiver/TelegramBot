@@ -326,6 +326,7 @@ def home_work(id_user):
             types.InlineKeyboardButton('ДЗ ' + str(i + 1),
                                        callback_data='dz-' + str(task_ids[i]) + '-' + str(i + 1)))
     inline_markup.row(types.InlineKeyboardButton('Создать', callback_data='create_dz'))
+    inline_markup.row(types.InlineKeyboardButton('Журнал', callback_data='journal'))
     bot.send_message(id_user, "Выберите ДЗ:", reply_markup=inline_markup)
 
 
