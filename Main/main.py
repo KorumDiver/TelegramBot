@@ -316,7 +316,7 @@ def rating(id_user):
 
 
 def home_work(id_user):
-    check(id_user)
+    user = check(id_user)
 
     ret = db.get_home_work(name_course=pool[id_user]['log'][1])  # список дз из базы
     task_ids = list(ret['tasks'].keys())
@@ -325,8 +325,9 @@ def home_work(id_user):
         inline_markup.row(
             types.InlineKeyboardButton('ДЗ ' + str(i + 1),
                                        callback_data='dz-' + str(task_ids[i]) + '-' + str(i + 1)))
-    inline_markup.row(types.InlineKeyboardButton('Создать', callback_data='create_dz'))
-    inline_markup.row(types.InlineKeyboardButton('Журнал', callback_data='journal'))
+    if user['role'] == 2:
+        inline_markup.row(types.InlineKeyboardButton('Создать', callback_data='create_dz'))
+        inline_markup.row(types.InlineKeyboardButton('Журнал', callback_data='journal'))
     bot.send_message(id_user, "Выберите ДЗ:", reply_markup=inline_markup)
 
 
